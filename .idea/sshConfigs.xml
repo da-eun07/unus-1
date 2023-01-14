@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig authType="PASSWORD" host="147.46.121.38" id="3d49284f-d6ab-4af5-99c5-d6547d2d529f" port="22" nameFormat="DESCRIPTIVE" username="deep_learning_88" useOpenSSHConfig="true" />
+    </configs>
+  </component>
+</project>
