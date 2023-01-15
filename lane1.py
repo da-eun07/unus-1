@@ -17,13 +17,13 @@ lane_detection = cv_util.libLANE()
 
 while (cap.isOpened()):
     ret, image = cap.read()
-    result, steer = lane_detection.lane(image)
-
+    result = lane_detection.lane(image)
+    '''
     if steer == 'r':
         print("right")
     elif steer == 'l':
         print("left")
-    
+    '''
     cv2.imshow('result', result)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
