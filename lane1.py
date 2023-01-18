@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import cv2
 import Vision.cv_util_func as cv_util
-'''
+import Vision.cam_util_func as cam_util
+
+
 # image
 lane_detection = cv_util.libLANE()
 image = cv2.imread('./test_images/solidWhiteCurve.jpg')
@@ -12,18 +14,18 @@ cv2.waitKey(0)
 
 '''
 # video
-cap = cv2.VideoCapture('./test_videos/solidWhiteRight.mp4')
+cap = cv2.VideoCapture('./test_videos/solidYellowLeft.mp4')
 lane_detection = cv_util.libLANE()
 
 while (cap.isOpened()):
     ret, image = cap.read()
     result = lane_detection.lane(image)
-    '''
+    
     if steer == 'r':
         print("right")
     elif steer == 'l':
         print("left")
-    '''
+    
     cv2.imshow('result', result)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
@@ -31,3 +33,25 @@ while (cap.isOpened()):
 # Release
 cap.release()
 cv2.destroyAllWindows()
+'''
+'''
+# cam
+cam = cam_util.libCAMERA()
+ch0, ch1 = cam.initial_setting(cam0port=1, cam1port=2, capnum=2)
+lane_detection = cv_util.libLANE()
+
+while True:
+    _, frame0, _, frame1 = cam.camera_read(ch0, ch1)
+    cam.image_show(frame0, frame1)
+
+    result = lane_detection.lane(frame1)
+
+    cv2.imshow('result', result)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+    # if cam.loop_break():
+    #     break
+
+# Release
+cv2.destroyAllWindows()
+'''

@@ -1,18 +1,16 @@
-import Lidar.li_util_func as li_util
+# ARDUINO EXERCISE
 
-if (__name__ == '__main__'):
+import Arduino.ar_util_func as ar_util
 
-    env = li_util.libLIDAR('COM7') ### FIX ME
-    env.init()
+arduino_port = '/dev/cu.usbmodem1101' ### FIX ME
 
-    env.getState()
+ser = ar_util.libARDUINO()
+comm = ser.init(arduino_port, 9600)
 
-    count = 0
+while True:
+    input_value = input('아두이노로 전송할 저항 값(0~255): ')
 
-    for scan in env.scanning():
-        count += 1
-        print('%d: Got %d measurements' %(count,  len(scan)))
+    comm.write(input_value.encode())
 
-        if count == 10:
-            env.stop()
-            break
+    if input_value == 'q':
+        break

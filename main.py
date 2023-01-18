@@ -4,7 +4,7 @@ import Vision.cam_util_func as cam_util
 
 mode_list = ["DRIVE", "MISSION_1", "MISSION_2"]
 # EPOCH = 500000
-arduino_port = 'COM7' ### FIX ME
+arduino_port = '/dev/cu.usbmodem1101' ### FIX ME
 
 if __name__ == "__main__":
     # MODE SELECTING
@@ -19,15 +19,16 @@ if __name__ == "__main__":
     print("MODE: " + MODE)
 
     # ARDUINO CONNECTING
-    ser = ar_util.libARDUINO()
-    comm = ser.init(arduino_port, 9600)
+    # ser = ar_util.libARDUINO()
+    # comm = ser.init(arduino_port, 9600)
     # CAMERA CONNECTING
     cam = cam_util.libCAMERA()
-    ch0, ch1 = cam.initial_setting(cam0port=0, cam1port=1, capnum=2)
+    ch0, ch1 = cam.initial_setting(cam0port=1, cam1port=2, capnum=2)
 
     while True:
-        input_value = 0
-        comm.write(input_value.encode()) # direction input
+        # input_value = input('아두이노로 전송할 저항 값(0~255): ')
+        # input_value = 0 ### FIX ME
+        # comm.write(input_value.encode())
 
         _, frame0, _, frame1 = cam.camera_read(ch0, ch1)
         cam.image_show(frame0, frame1)
