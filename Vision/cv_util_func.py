@@ -143,6 +143,8 @@ class libLANE(object):
         right_line_x_2 = []
         right_line_y_2 = []
 
+        result = image
+
         if lines_1 is not None:
             for line in lines_1:
                 for x1, y1, x2, y2 in line:
@@ -191,7 +193,5 @@ class libLANE(object):
                 result = self.weighted_img(line_image, image, 0.8, 1.0, 0)
 
                 current_steer = self.steering(center1)
-            else:
-                result = image
 
         return result
