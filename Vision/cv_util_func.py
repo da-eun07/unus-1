@@ -22,20 +22,39 @@ class libLANE(object):
         return masked_image
     def weighted_img(self, img, initial_img, α=1, β=1., λ=0.):
         return cv2.addWeighted(initial_img, α, img, β, λ)
+    def hough_transform(self, img, rho=None, theta=None, threshold=None, mll=None, mlg=None, mode="lineP"):
+        if mode == "line":
+            return cv2.HoughLines(img.copy(), rho, theta, threshold)
+        elif mode == "lineP":
+            return cv2.HoughLinesP(img.copy(), rho, theta, threshold, lines=np.array([]),
+                                   minLineLength=mll, maxLineGap=mlg)
+        elif mode == "circle":
+            return cv2.HoughCircles(img.copy(), cv2.HOUGH_GRADIENT, dp=1, minDist=80,
+                                    param1=200, param2=10, minRadius=40, maxRadius=100)
+    def morphology(self, img, kernel_size=(None, None), mode="opening"):
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_size)
+
+        if mode == "opening":
+            dst = cv2.erode(img.copy(), kernel)
+            return cv2.dilate(dst, kernel)
+        elif mode == "closing":
+            dst = cv2.dilate(img.copy(), kernel)
+            return cv2.erode(dst, kernel)
+        elif mode == "gradient":
+            return cv2.morphologyEx(img.copy(), cv2.MORPH_GRADIENT, kernel)
     def preprocess(self, img):
-        region_of_interest_vertices_1 = np.array(
-            [[(50, self.height), (self.width / 2 - 45, self.height / 2 + 60),
-              (self.width / 2 + 45, self.height / 2 + 60), (self.width - 50, self.height)]],
+        region_of_interest_vertices = np.array(
+            [[(0, self.height), (0, self.height * (5 / 12)),
+              (self.width, self.height * (5 / 12)), (self.width, self.height)]],
             dtype=np.int32) ### FIX ME
-        region_of_interest_vertices_2 = [(0, self.height), (self.width / 2, self.height / 2),
-                                         (self.width, self.height), ]
 
         gray_image = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        blur_image = cv2.GaussianBlur(gray_image, (3, 3), 0)
-        # cannyed_image = cv2.Canny(blur_image, 100, 200)
-        canny_image = cv2.Canny(blur_image, 70, 210)
-
-        cropped_image = self.region_of_interest(canny_image, np.array([region_of_interest_vertices_1], np.int32), )
+        hist = cv2.equalizeHist(gray_image)
+        open = self.morphology(hist, (3, 3), mode="opening")
+        close = self.morphology(open, (5, 5), mode="closing")
+        blur_image = cv2.GaussianBlur(close, (3, 3), 0)
+        canny_image = cv2.Canny(blur_image, 130, 250)
+        cropped_image = self.region_of_interest(canny_image, np.array([region_of_interest_vertices], np.int32), )
 
         return cropped_image
     def draw_lines(self, img, lines, color=[0, 0, 255], thickness=7):
@@ -109,31 +128,18 @@ class libLANE(object):
 
     def lane(self, image):
         self.height, self.width = image.shape[:2]
-        cropped_image = self.preprocess(image)
+        pre_image = self.preprocess(image)
         self.min_y = int(image.shape[0] * (5 / 10))
         self.mid_y_1 = int(image.shape[0] * (6 / 10))
         self.mid_y_2 = int(image.shape[0] * (3 / 10))
         self.max_y = int(image.shape[0])
+        lines = self.hough_transform(pre_image,rho=1,theta=np.pi/180,threshold=30,mll=10,mlg=20,mode="lineP")
 
-        lines_1 = cv2.HoughLinesP(
-            cropped_image,
-            rho=1,
-            theta=np.pi / 180,
-            threshold=30,
-            lines=np.array([]),
-            minLineLength=10,
-            maxLineGap=20
-        )
-        lines_2 = cv2.HoughLinesP( ### option2
-            cropped_image,
-            rho=6,
-            theta=np.pi / 60,
-            threshold=160,
-            lines=np.array([]),
-            minLineLength=40,
-            maxLineGap=25
-        )
+        # result = image
+        line_image = self.draw_lines(image, lines, color=[255, 0, 0], thickness=3)
+        result = self.weighted_img(line_image, image, 0.8, 1.0, 0)
 
+        '''
         left_line_x_1 = []
         left_line_y_1 = []
         right_line_x_1 = []
@@ -142,9 +148,7 @@ class libLANE(object):
         left_line_y_2 = []
         right_line_x_2 = []
         right_line_y_2 = []
-
-        result = image
-
+        
         if lines_1 is not None:
             for line in lines_1:
                 for x1, y1, x2, y2 in line:
@@ -165,7 +169,7 @@ class libLANE(object):
                         if y1 < self.mid_y_2:
                             right_line_x_2.extend([x1, x2])
                             right_line_y_2.extend([y1, y2])
-
+        
             # Drawing POLY (deg=2)
             if len(left_line_y_2) != 0 and len(right_line_y_2) != 0:
                 poly_left_2, poly_right_2 = self.get_poly(left_line_y_2, left_line_x_2, right_line_y_2, right_line_x_2, 2)
@@ -193,5 +197,6 @@ class libLANE(object):
                 result = self.weighted_img(line_image, image, 0.8, 1.0, 0)
 
                 current_steer = self.steering(center1)
+        '''
 
         return result
