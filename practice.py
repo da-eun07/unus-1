@@ -2,7 +2,7 @@
 
 import Arduino.ar_util_func as ar_util
 
-arduino_port = '/dev/cu.usbmodem1101' ### FIX ME
+arduino_port = '/dev/cu.usbmodem11101' ### FIX ME
 
 ser = ar_util.libARDUINO()
 comm = ser.init(arduino_port, 9600)

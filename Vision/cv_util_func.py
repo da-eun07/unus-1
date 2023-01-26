@@ -44,18 +44,38 @@ class libLANE(object):
             return cv2.morphologyEx(img.copy(), cv2.MORPH_GRADIENT, kernel)
     def preprocess(self, img):
         region_of_interest_vertices = np.array(
-            [[(0, self.height), (0, self.height * (5 / 12)),
-              (self.width, self.height * (5 / 12)), (self.width, self.height)]],
+            [[(0, self.height), (self.width * (2 / 12), self.height * (7 / 12)),
+              (self.width * (10/ 12), self.height * (7 / 12)), (self.width, self.height)]],
             dtype=np.int32) ### FIX ME
 
         gray_image = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
         hist = cv2.equalizeHist(gray_image)
-        open = self.morphology(hist, (3, 3), mode="opening")
-        close = self.morphology(open, (5, 5), mode="closing")
-        blur_image = cv2.GaussianBlur(close, (3, 3), 0)
+        open = self.morphology(hist, (5, 5), mode="opening")
+        close = self.morphology(open, (11, 11), mode="closing")
+        blur_image = cv2.GaussianBlur(close, (5, 5), 0)
         canny_image = cv2.Canny(blur_image, 130, 250)
         cropped_image = self.region_of_interest(canny_image, np.array([region_of_interest_vertices], np.int32), )
 
+        return cropped_image
+    def preprocess2(self, image):
+        region_of_interest_vertices = np.array(
+            [[(0, self.height), (self.width * (2 / 12), self.height * (7 / 12)),
+              (self.width * (10 / 12), self.height * (7 / 12)), (self.width, self.height)]],
+            dtype=np.int32)  ### FIX ME
+
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        white = cv2.inRange(hsv, (0, 0, 160), (180, 255, 255))  ### FIX ME
+        green_mask = cv2.inRange(hsv, (30, 20, 23), (70, 255, 255))  ### FIX ME
+        green_imask = green_mask > 0
+        white[green_imask] = 0
+        blur_image = cv2.GaussianBlur(white, (5, 5), 0)
+        open = self.morphology(blur_image, (4, 4), mode="opening")
+        close = self.morphology(open, (8, 8), mode="closing")
+        canny_image = cv2.Canny(close, 130, 250)
+
+        cropped_image = self.region_of_interest(canny_image, np.array([region_of_interest_vertices], np.int32))
+        i = cropped_image >0
+        cropped_image[i] = 255
         return cropped_image
     def draw_lines(self, img, lines, color=[0, 0, 255], thickness=7):
         line_img = np.zeros((img.shape[0],img.shape[1],3),dtype=np.uint8)
@@ -128,16 +148,19 @@ class libLANE(object):
 
     def lane(self, image):
         self.height, self.width = image.shape[:2]
-        pre_image = self.preprocess(image)
         self.min_y = int(image.shape[0] * (5 / 10))
         self.mid_y_1 = int(image.shape[0] * (6 / 10))
         self.mid_y_2 = int(image.shape[0] * (3 / 10))
         self.max_y = int(image.shape[0])
-        lines = self.hough_transform(pre_image,rho=1,theta=np.pi/180,threshold=30,mll=10,mlg=20,mode="lineP")
+        pre_image = self.preprocess2(image)
+        lines = self.hough_transform(pre_image,rho=1,theta=np.pi/180,threshold=30,mll=30,mlg=10,mode="lineP")
 
         # result = image
-        line_image = self.draw_lines(image, lines, color=[255, 0, 0], thickness=3)
-        result = self.weighted_img(line_image, image, 0.8, 1.0, 0)
+        if lines is None:
+            result = image
+        else:
+            line_image = self.draw_lines(image, lines, color=[0, 0, 255], thickness=15)
+            result = self.weighted_img(line_image, image, 0.8, 1.0, 0)
 
         '''
         left_line_x_1 = []
@@ -148,9 +171,11 @@ class libLANE(object):
         left_line_y_2 = []
         right_line_x_2 = []
         right_line_y_2 = []
-        
-        if lines_1 is not None:
-            for line in lines_1:
+
+        result = image
+
+        if lines is not None:
+            for line in lines:
                 for x1, y1, x2, y2 in line:
                     slope = (y2 - y1) / (x2 - x1)
                     if np.abs(slope) < 0.5: # stop line
@@ -197,6 +222,24 @@ class libLANE(object):
                 result = self.weighted_img(line_image, image, 0.8, 1.0, 0)
 
                 current_steer = self.steering(center1)
-        '''
 
+        '''
         return result
+
+    def test(self, image):
+        region_of_interest_vertices = np.array(
+            [[(0, self.height), (0, self.height * (5 / 12)),
+              (self.width, self.height * (5 / 12)), (self.width, self.height)]],
+            dtype=np.int32)  ### FIX ME
+
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        white = cv2.inRange(hsv, (0, 0, 180), (180, 255, 255)) ### FIX ME
+        green_mask = cv2.inRange(hsv, (30, 20, 23), (70, 255, 255)) ### FIX ME
+        green_imask = green_mask > 0
+        white[green_imask] = 0
+        blur_image = cv2.GaussianBlur(white, (5, 5), 0)
+        open = self.morphology(blur_image, (4, 4), mode="opening")
+        close = self.morphology(open, (8, 8), mode="closing")
+        canny_image = cv2.Canny(close, 130, 250)
+        # cropped_image = self.region_of_interest(canny_image, np.array([region_of_interest_vertices], np.int32))
+        return canny_image
