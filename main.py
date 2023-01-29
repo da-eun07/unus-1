@@ -1,5 +1,5 @@
 import Arduino.ar_util_func as ar_util
-import Vision.cv_util_func as cv_util
+import Vision.lane_util_func as cv_util
 import Vision.cam_util_func as cam_util
 
 mode_list = ["DRIVE", "MISSION_1", "MISSION_2"]

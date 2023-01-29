@@ -1,10 +1,8 @@
 import sys
 import cv2                           # pip install opencv
-import time
-import serial                        # pip install serial
 import numpy as np                   # pip install numpy
 import matplotlib.pyplot as plt      # pip install matplotlib
-from rplidar import RPLidar          # pip install rplidar-roboticia
+import datetime
 np.set_printoptions(threshold=sys.maxsize, linewidth=150)
 
 NULL = 0
@@ -29,6 +27,12 @@ class libCAMERA(object):
             return True
         else:
             return False
+
+    def capture(self, frame):
+        if cv2.waitKey(10) & 0xFF == ord('c'):
+            print("캡쳐")
+            now = datetime.datetime.now().strftime("%d_%H-%M-%S")
+            cv2.imwrite("./record/" + str(now) + ".jpg", frame)
 
     def file_read(self, img_path):
         return np.array(cv2.imread(img_path))
@@ -91,6 +95,34 @@ class libCAMERA(object):
                 print("Camera Channel0 is enabled!")
 
             channel1 = cv2.VideoCapture(cam1port)
+            if channel1.isOpened():
+                print("Camera Channel1 is enabled!")
+
+        return channel0, channel1
+
+    def initial_setting_window(self, cam0port=0, cam1port=1, capnum=1):
+        # OpenCV Initial Setting
+        print("OpenCV Version:", cv2.__version__)
+        channel0 = None
+        channel1 = None
+        self.capnum = capnum
+
+        if capnum == 1:
+            channel0 = cv2.VideoCapture(cam0port, cv2.CAP_MSMF)
+            channel0.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+            channel0.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+            if channel0.isOpened():
+                print("Camera Channel0 is enabled!")
+        elif capnum == 2:
+            channel0 = cv2.VideoCapture(cam0port, cv2.CAP_MSMF)
+            channel0.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+            channel0.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+            if channel0.isOpened():
+                print("Camera Channel0 is enabled!")
+
+            channel1 = cv2.VideoCapture(cam1port, cv2.CAP_MSMF)
+            channel1.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+            channel1.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
             if channel1.isOpened():
                 print("Camera Channel1 is enabled!")
 

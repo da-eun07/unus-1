@@ -66,7 +66,7 @@ class libLANE(object):
             dtype=np.int32)
         r_roi = np.array(
             [[(self.width / 2, self.height), (self.width * (6 / 12), self.height * (6 / 12)),
-              (self.width * (10 / 12), self.height * (6 / 12)), (self.width, self.height)]],
+              (self.width, self.height * (6 / 12)), (self.width, self.height)]],
             dtype=np.int32)
         l_roi = np.array(
             [[(0, self.height), (0, self.height * (6 / 12)),
