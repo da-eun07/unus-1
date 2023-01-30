@@ -9,10 +9,13 @@ import Vision.bird_eye_view as Bird
 # image
 lane_detection = lane_util.libLANE()
 image = cv2.imread('./test_images/27_16-20-09.jpg')
-cv2.imshow('im',image)
+# cv2.imshow('im',image)
 t_frame = Bird.bev(image)
-cv2.imshow('t',t_frame)
-
+# cv2.imshow('t',t_frame)
+_, red = lane_detection.red_center(t_frame)
+pre = lane_detection.preprocess2(t_frame, 'r')
+cv2.imshow('r', pre)
+cv2.imshow('r', red)
 result = lane_detection.add_lane(t_frame,2)
 
 cv2.imshow('result', result)

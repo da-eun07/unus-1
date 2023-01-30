@@ -8,11 +8,11 @@ def bev(frame):
     tr = (1380, 350)
     br = (1920, 1080)
 
-    # 내가 정한 Corner 포인트들 빨간 점으로 표시
-    cv2.circle(frame, tl, 5, (0, 0, 255), -1)
-    cv2.circle(frame, bl, 5, (0, 0, 255), -1)
-    cv2.circle(frame, tr, 5, (0, 0, 255), -1)
-    cv2.circle(frame, br, 5, (0, 0, 255), -1)
+    # 내가 정한 Corner 포인트들 파란 점으로 표시
+    cv2.circle(frame, tl, 5, (255, 0, 0), -1)
+    cv2.circle(frame, bl, 5, (255, 0, 0), -1)
+    cv2.circle(frame, tr, 5, (255, 0, 0), -1)
+    cv2.circle(frame, br, 5, (255, 0, 0), -1)
 
     # Apply Geometrical Transformation
     pts1 = np.float32([tl, bl, tr, br])

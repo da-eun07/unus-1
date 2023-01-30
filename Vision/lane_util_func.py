@@ -1,8 +1,10 @@
-import math
 import sys
 import cv2
 import numpy as np
 np.set_printoptions(threshold=sys.maxsize, linewidth=150)
+
+SATURATION = 150
+
 
 class libLANE(object):
     def __init__(self):
@@ -13,44 +15,45 @@ class libLANE(object):
         self.match_mask_color = 255
         self.poly_data_r = None
         self.poly_data_l = None
+        self.poly_data_c = None
         self.line_bool_r = False
         self.line_bool_l = False
-    def region_of_interest(self, img, vertices):
-        mask = np.zeros_like(img)
-        if len(img.shape) > 2:
+    def region_of_interest(self, image, vertices):
+        mask = np.zeros_like(image)
+        if len(image.shape) > 2:
             self.match_mask_color = (255,255,255)
         cv2.fillPoly(mask, vertices, self.match_mask_color)
-        masked_image = cv2.bitwise_and(img, mask)
+        masked_image = cv2.bitwise_and(image, mask)
         return masked_image
-    def weighted_img(self, img, initial_img, α=1, β=1., λ=0.):
-        return cv2.addWeighted(initial_img, α, img, β, λ)
-    def hough_transform(self, img, rho=None, theta=None, threshold=None, mll=None, mlg=None, mode="lineP"):
+    def weighted_img(self, image, initial_img, α=1, β=1., λ=0.):
+        return cv2.addWeighted(initial_img, α, image, β, λ)
+    def hough_transform(self, image, rho=None, theta=None, threshold=None, mll=None, mlg=None, mode="lineP"):
         if mode == "line":
-            return cv2.HoughLines(img.copy(), rho, theta, threshold)
+            return cv2.HoughLines(image.copy(), rho, theta, threshold)
         elif mode == "lineP":
-            return cv2.HoughLinesP(img.copy(), rho, theta, threshold, lines=np.array([]),
+            return cv2.HoughLinesP(image.copy(), rho, theta, threshold, lines=np.array([]),
                                    minLineLength=mll, maxLineGap=mlg)
         elif mode == "circle":
-            return cv2.HoughCircles(img.copy(), cv2.HOUGH_GRADIENT, dp=1, minDist=80,
+            return cv2.HoughCircles(image.copy(), cv2.HOUGH_GRADIENT, dp=1, minDist=80,
                                     param1=200, param2=10, minRadius=40, maxRadius=100)
-    def morphology(self, img, kernel_size=(None, None), mode="opening"):
+    def morphology(self, image, kernel_size=(None, None), mode="opening"):
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_size)
 
         if mode == "opening":
-            dst = cv2.erode(img.copy(), kernel)
+            dst = cv2.erode(image.copy(), kernel)
             return cv2.dilate(dst, kernel)
         elif mode == "closing":
-            dst = cv2.dilate(img.copy(), kernel)
+            dst = cv2.dilate(image.copy(), kernel)
             return cv2.erode(dst, kernel)
         elif mode == "gradient":
-            return cv2.morphologyEx(img.copy(), cv2.MORPH_GRADIENT, kernel)
-    def preprocess(self, img):
+            return cv2.morphologyEx(image.copy(), cv2.MORPH_GRADIENT, kernel)
+    def preprocess(self, image):
         region_of_interest_vertices = np.array(
             [[(0, self.height), (self.width * (2 / 12), self.height * (7 / 12)),
               (self.width * (10/ 12), self.height * (7 / 12)), (self.width, self.height)]],
             dtype=np.int32) ### FIX ME
 
-        gray_image = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         hist = cv2.equalizeHist(gray_image)
         open = self.morphology(hist, (5, 5), mode="opening")
         close = self.morphology(open, (11, 11), mode="closing")
@@ -65,8 +68,8 @@ class libLANE(object):
               (self.width * (10 / 12), self.height * (6 / 12)), (self.width, self.height)]],
             dtype=np.int32)
         r_roi = np.array(
-            [[(self.width / 2, self.height), (self.width * (6 / 12), self.height * (6 / 12)),
-              (self.width, self.height * (6 / 12)), (self.width, self.height)]],
+            [[(self.width / 2, self.height-50), (self.width * (6 / 12), self.height * (6 / 12)),
+              (self.width, self.height * (6 / 12)), (self.width, self.height-50)]],
             dtype=np.int32)
         l_roi = np.array(
             [[(0, self.height), (0, self.height * (6 / 12)),
@@ -110,22 +113,22 @@ class libLANE(object):
         ROI = self.region_of_interest(canny_image, region_of_interest_vertices)
 
         return ROI
-    def draw_lines(self, img, lines, color=[0, 0, 255], thickness=7):
-        line_img = np.zeros((img.shape[0],img.shape[1],3),dtype=np.uint8)
+    def draw_lines(self, image, lines, color=[0, 0, 255], thickness=7):
+        line_image = np.zeros((image.shape[0],image.shape[1],3),dtype=np.uint8)
         if lines is None:
             return
         for line in lines:
             for x1, y1, x2, y2 in line:
-                cv2.line(line_img, (x1, y1), (x2, y2), color, thickness)
-        return line_img
-    def draw_poly(self, img, poly, min, max, color=[0, 255, 0], thickness=7):
-        poly_image = np.zeros((img.shape[0],img.shape[1],3),dtype=np.uint8)
+                cv2.line(line_image, (x1, y1), (x2, y2), color, thickness)
+        return line_image
+    def draw_poly(self, image, poly, min, max, color=[0, 255, 0], thickness=7):
+        poly_image = np.zeros((image.shape[0],image.shape[1],3),dtype=np.uint8)
         for y in np.arange(min, max, 1):
             y = int(y)
             x = int(poly(y))
             cv2.line(poly_image, (x, y), (x, y), color=color, thickness=thickness)
         return poly_image
-    def get_poly(self, line_y, line_x, lr, deg, weight):
+    def get_poly(self, line_y, line_x, lr, deg, weight=0.75):
         if deg == 1:
             poly_param = np.polyfit(line_y, line_x, deg=1)
         else:
@@ -139,27 +142,60 @@ class libLANE(object):
             if self.poly_data_r is not None:
                 poly_param = poly_param * (1 - weight) + self.poly_data_r * (weight)
             self.poly_data_r = poly_param
-        else:
+        elif lr == 'l':
             if self.poly_data_l is not None:
                 poly_param = poly_param * (1 - weight) + self.poly_data_l * (weight)
             self.poly_data_l = poly_param
+        else:
+            if self.poly_data_c is not None:
+                poly_param = poly_param * (1 - weight) + self.poly_data_c * (weight)
+            self.poly_data_c = poly_param
 
         poly = np.poly1d(poly_param)
         return poly
-    def get_draw_center(self, img, poly_left, poly_right, draw=False):
-        center = []
-        line_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
 
-        for y in np.arange(self.min_y, self.max_y, 1):
-            y = int(y)
-            left_x = poly_left(y)
-            right_x = poly_right(y)
-            cen = int((left_x + right_x) / 2)
-            center.extend([cen])
-            cv2.line(line_img, (cen, y), (cen, y), color=[0, 0, 255], thickness=10)
-        if draw == False:
-            line_img = img
-        return center, line_img
+    def red_center(self, image):
+        self.height, self.width = image.shape[:2]
+        self.min_y = int(self.height * (6 / 12))
+        self.max_y = int(self.height)
+        c_lines = []
+        c_lines_x = []
+        c_lines_y = []
+        center_line = None
+        center_image = np.zeros((self.height, self.width, 3), dtype=np.uint8)
+
+        hsv_img = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2HSV)
+        h, s, v = cv2.split(hsv_img)
+
+        s_cond = s > SATURATION
+        h_cond = (h < 4) | (h > 176)
+
+        v[~h_cond], v[~s_cond] = 0, 0
+        hsv_image = cv2.merge([h, s, v])
+        rgb_image = cv2.cvtColor(hsv_image, cv2.COLOR_HSV2BGR)
+        canny_image = cv2.Canny(rgb_image, 80, 250)
+
+        lines = self.hough_transform(canny_image, rho=1, theta=np.pi / 180, threshold=10, mll=10, mlg=20, mode="lineP")
+
+        if lines is not None:
+            for line in lines:
+                for x1, y1, x2, y2 in line:
+                    slope = (y2 - y1) / (x2 - x1)
+                    if np.abs(slope) < 0.5:  # stop line
+                        continue
+                    else:
+                        c_lines.append([[x1, y1, x2, y2]])
+                        c_lines_x.extend([x1, x2])
+                        c_lines_y.extend([y1, y2])
+
+            center_line = self.get_poly(c_lines_y, c_lines_x, 'c', deg=1,)
+        
+            x_start = int(center_line(0))
+            x_end = int(center_line(self.height))
+            center_image = self.draw_lines(image, [[[x_start, 0, x_end, self.height], ]], color=[255, 0, 0],thickness=7, )
+
+        return center_line, center_image
+
     def steering(self, center):
         right = 0
         left = 0
@@ -179,6 +215,9 @@ class libLANE(object):
         return steer
 
     def right_lane(self, image, deg):
+        self.height, self.width = image.shape[:2]
+        self.min_y = int(self.height * (6 / 12))
+        self.max_y = int(self.height)
         right_line_x = []
         right_line_y = []
         poly_image_r = np.zeros((image.shape[0],image.shape[1],3),dtype=np.uint8)
@@ -218,6 +257,9 @@ class libLANE(object):
         else:
             return True, poly_image_r
     def left_lane(self, image, deg):
+        self.height, self.width = image.shape[:2]
+        self.min_y = int(self.height * (6 / 12))
+        self.max_y = int(self.height)
         left_line_x = []
         left_line_y = []
         poly_image_l = np.zeros((image.shape[0],image.shape[1],3),dtype=np.uint8)
@@ -255,20 +297,22 @@ class libLANE(object):
             return True, poly_image_l
     def add_lane(self, image, deg):
         self.height, self.width = image.shape[:2]
-        self.min_y = int(image.shape[0] * (6 / 12))
-        self.max_y = int(image.shape[0])
+        self.min_y = int(self.height * (6 / 12))
+        self.max_y = int(self.height)
 
         r_b, right = self.right_lane(image, deg)
         l_b, left = self.left_lane(image, deg)
+        center_line, center = self.red_center(image)
         lane = right + left
-        result = self.weighted_img(lane, image, 0.8, 1.0, 0)
+        lane_center = self.weighted_img(lane, center, 1.0, 1.0, 0)
+        result = self.weighted_img(lane_center, image, 0.8, 1.0, 0)
 
         return result
 
     def hough_lane(self, image):
         self.height, self.width = image.shape[:2]
-        self.min_y = int(image.shape[0] * (6 / 12))
-        self.max_y = int(image.shape[0])
+        self.min_y = int(self.height * (6 / 12))
+        self.max_y = int(self.height)
 
         pre_image = self.preprocess2(image, 'a')
         lines = self.hough_transform(pre_image, rho=1, theta=np.pi/180, threshold=10, mll=10, mlg=20, mode="lineP")
