@@ -2,24 +2,24 @@ import cv2 as cv2
 import numpy as np
 
 def bev(frame):
-    # Corners of Top Left , Bottom Left, Top Right, Bottom Right 카메라 FOV 에 맞춰서 정하면 될듯
-    tl = (500, 350)
-    bl = (0, 1080)
-    tr = (1380, 350)
+    # Corners of Top Left , Bottom Left, Top Right, Bottom Right
+    tl = (790, 560)
+    bl = (400, 1080)
+    tr = (1520, 560)
     br = (1920, 1080)
 
-    # 내가 정한 Corner 포인트들 파란 점으로 표시
-    cv2.circle(frame, tl, 5, (255, 0, 0), -1)
-    cv2.circle(frame, bl, 5, (255, 0, 0), -1)
-    cv2.circle(frame, tr, 5, (255, 0, 0), -1)
-    cv2.circle(frame, br, 5, (255, 0, 0), -1)
+    # Corner 포인트들 파란 점으로 표시
+    # cv2.circle(frame, tl, 5, (255, 0, 0), -1)
+    # cv2.circle(frame, bl, 5, (255, 0, 0), -1)
+    # cv2.circle(frame, tr, 5, (255, 0, 0), -1)
+    # cv2.circle(frame, br, 5, (255, 0, 0), -1)
 
     # Apply Geometrical Transformation
     pts1 = np.float32([tl, bl, tr, br])
     pts2 = np.float32([[0, 0], [0, 1080], [1920, 0], [1920, 1080]])
 
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
-    print("Bird-eye-view Matrix: \n", matrix)
+    # print("Bird-eye-view Matrix: \n", matrix)
     t_frame = cv2.warpPerspective(frame, matrix, (1920, 1080))
 
     return t_frame

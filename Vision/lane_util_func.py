@@ -64,16 +64,16 @@ class libLANE(object):
         return cropped_image
     def preprocess2(self, image, roi='a'):
         a_roi = np.array(
-            [[(0, self.height), (self.width * (2 / 12), self.height * (6 / 12)),
-              (self.width * (10 / 12), self.height * (6 / 12)), (self.width, self.height)]],
+            [[(0, self.height - 70), (0, 0),
+              (self.width, 0), (self.width, self.height - 70)]],
             dtype=np.int32)
         r_roi = np.array(
-            [[(self.width / 2, self.height-50), (self.width * (6 / 12), self.height * (6 / 12)),
-              (self.width, self.height * (6 / 12)), (self.width, self.height-50)]],
+            [[(self.width / 2 - 140, self.height - 50), (self.width / 2 - 140, 0),
+              (self.width, 0), (self.width, self.height - 50)]],
             dtype=np.int32)
         l_roi = np.array(
-            [[(0, self.height), (0, self.height * (6 / 12)),
-              (self.width * (4 / 12), self.height * (6 / 12)), (self.width * (4 / 12), self.height)]],
+            [[(0, self.height - 50), (0, 0),
+              (self.width /2 - 140, self.height - 50), (self.width /2 - 140, 0)]],
             dtype=np.int32)
 
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -94,11 +94,19 @@ class libLANE(object):
         i = cropped_image > 0
         cropped_image[i] = 255
         return cropped_image
-    def preprocess3(self, image):
-        region_of_interest_vertices = np.array(
-            [[(0, self.height), (0, self.height * (5 / 12)),
-              (self.width, self.height * (5 / 12)), (self.width, self.height)]],
-            dtype=np.int32)  ### FIX ME
+    def preprocess3(self, image, roi='a'):
+        a_roi = np.array(
+            [[(0, self.height - 70), (0, 0),
+              (self.width, 0), (self.width, self.height - 70)]],
+            dtype=np.int32)
+        r_roi = np.array(
+            [[(self.width / 2 - 140, self.height - 50), (self.width / 2 - 140, 0),
+              (self.width, 0), (self.width, self.height - 50)]],
+            dtype=np.int32)
+        l_roi = np.array(
+            [[(0, self.height - 50), (0, 0),
+              (self.width / 2 - 140, self.height - 50), (self.width / 2 - 140, 0)]],
+            dtype=np.int32)
 
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         h, s, v = cv2.split(hsv_image)
@@ -110,9 +118,15 @@ class libLANE(object):
         open = self.morphology(close, (4, 4), mode="opening")
         blur_image = cv2.GaussianBlur(open, (3, 3), 0)
         canny_image = cv2.Canny(blur_image, 200, 400)
-        ROI = self.region_of_interest(canny_image, region_of_interest_vertices)
-
-        return ROI
+        if roi == 'a' :
+            cropped_image = self.region_of_interest(canny_image, np.array([a_roi], np.int32))
+        elif roi == 'r':
+            cropped_image = self.region_of_interest(canny_image, np.array([r_roi], np.int32))
+        else:
+            cropped_image = self.region_of_interest(canny_image, np.array([l_roi], np.int32))
+        i = cropped_image > 0
+        cropped_image[i] = 255
+        return cropped_image
     def draw_lines(self, image, lines, color=[0, 0, 255], thickness=7):
         line_image = np.zeros((image.shape[0],image.shape[1],3),dtype=np.uint8)
         if lines is None:
@@ -133,7 +147,7 @@ class libLANE(object):
             poly_param = np.polyfit(line_y, line_x, deg=1)
         else:
             poly_param = np.polyfit(line_y, line_x, deg=2)
-            if abs(poly_param[0]) > 0.002 : ### FIX ME
+            if abs(poly_param[0]) > 0.0005 : ### FIX ME
                 poly_param = np.polyfit(line_y, line_x, deg=1)
         if len(poly_param) == 2:
             poly_param = np.append(np.array([0]), poly_param)
@@ -156,7 +170,7 @@ class libLANE(object):
 
     def red_center(self, image):
         self.height, self.width = image.shape[:2]
-        self.min_y = int(self.height * (6 / 12))
+        self.min_y = 0
         self.max_y = int(self.height)
         c_lines = []
         c_lines_x = []
@@ -216,10 +230,11 @@ class libLANE(object):
 
     def right_lane(self, image, deg):
         self.height, self.width = image.shape[:2]
-        self.min_y = int(self.height * (6 / 12))
+        self.min_y = 0
         self.max_y = int(self.height)
         right_line_x = []
         right_line_y = []
+        poly_r = None
         poly_image_r = np.zeros((image.shape[0],image.shape[1],3),dtype=np.uint8)
 
         right_image = self.preprocess2(image, "r")
@@ -253,15 +268,16 @@ class libLANE(object):
 
 
         if self.line_bool_r is False:
-            return False, poly_image_r
+            return poly_r, poly_image_r
         else:
-            return True, poly_image_r
+            return poly_r, poly_image_r
     def left_lane(self, image, deg):
         self.height, self.width = image.shape[:2]
-        self.min_y = int(self.height * (6 / 12))
+        self.min_y = 0
         self.max_y = int(self.height)
         left_line_x = []
         left_line_y = []
+        poly_l = None
         poly_image_l = np.zeros((image.shape[0],image.shape[1],3),dtype=np.uint8)
 
         left_image = self.preprocess2(image, "l")
@@ -292,27 +308,26 @@ class libLANE(object):
                     x_end_l = int(poly_line_l(self.min_y))
                     poly_image_l = self.draw_lines(image, [[[x_start_l, self.max_y, x_end_l, self.min_y], ]], color=[255, 0, 0], thickness=7, )
         if self.line_bool_r is False:
-            return False, poly_image_l
+            return poly_l, poly_image_l
         else:
-            return True, poly_image_l
+            return poly_l, poly_image_l
     def add_lane(self, image, deg):
         self.height, self.width = image.shape[:2]
-        self.min_y = int(self.height * (6 / 12))
+        self.min_y = 0
         self.max_y = int(self.height)
 
         r_b, right = self.right_lane(image, deg)
-        l_b, left = self.left_lane(image, deg)
-        center_line, center = self.red_center(image)
-        lane = right + left
-        lane_center = self.weighted_img(lane, center, 1.0, 1.0, 0)
+        # l_b, left = self.left_lane(image, deg)
+        # center_line, center = self.red_center(image)
+        center = self.draw_lines(image, [[[823, self.max_y, 775, self.min_y], ]], color=[0, 0, 255], thickness=7, )
+        #lane = right + left
+        lane_center = self.weighted_img(right, center, 1.0, 1.0, 0)
         result = self.weighted_img(lane_center, image, 0.8, 1.0, 0)
 
         return result
 
     def hough_lane(self, image):
         self.height, self.width = image.shape[:2]
-        self.min_y = int(self.height * (6 / 12))
-        self.max_y = int(self.height)
 
         pre_image = self.preprocess2(image, 'a')
         lines = self.hough_transform(pre_image, rho=1, theta=np.pi/180, threshold=10, mll=10, mlg=20, mode="lineP")

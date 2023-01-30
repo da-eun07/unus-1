@@ -4,7 +4,7 @@ import Vision.lane_util_func as lane_util
 import Vision.cam_util_func as cam_util
 import Vision.bird_eye_view as Bird
 
-
+'''
 # 1
 # image
 lane_detection = lane_util.libLANE()
@@ -20,7 +20,7 @@ result = lane_detection.add_lane(t_frame,2)
 
 cv2.imshow('result', result)
 cv2.waitKey(0)
-
+'''
 
 
 '''
@@ -51,7 +51,7 @@ cap.release()
 cv2.destroyAllWindows()
 
 '''
-'''
+
 
 # 3
 # cam
@@ -65,10 +65,12 @@ while True:
     _, frame0= cam.camera_read(ch0)
     cam.image_show(frame0)
     t_frame = Bird.bev(frame0)
-    cam.image_show(t_frame)
-    
-    add0 = lane_detection.add_lane(frame0, 2) ### set ROI and parameter
-    cv2.imshow('add', add0)
+    pre = lane_detection.preprocess2(frame0, 'r')
+    prea = lane_detection.preprocess2(frame0, 'a')
+    cv2.imshow('pre', pre)
+    cv2.imshow('rea', prea)
+    lane = lane_detection.add_lane(t_frame, 2)
+    cv2.imshow('r', lane)
 
     if cam.loop_break():
         break
@@ -77,4 +79,3 @@ while True:
 
 # Release
 cv2.destroyAllWindows()
-'''
