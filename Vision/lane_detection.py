@@ -315,14 +315,30 @@ class libLANE(object):
         return result
 
     # PLAN B : USING SIDE CAM
-    def steering(self, hfs):
-        if hfs < 320:
+    def steering_poly(self, poly, param):
+        hfs = poly(self.width/2)
+        if hfs < self.height / 3:
             steer = 'right'
-        elif hfs > 760:
+        elif hfs > self.height * (2/3):
             steer = 'left'
         else:
-            steer = 'forward'
-
+            if param[1] > 0.070: ### FIX ME
+                steer = 'right'
+            elif param[1] < -0.070:
+                steer = 'left'
+            else:
+                steer = 'forward'
+        return steer
+    def steering_notp(self, image):
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        green_mask = cv2.inRange(hsv, (30, 20, 23), (70, 255, 255))  ### FIX ME
+        gray_mask = cv2.inRange(hsv, (0, 0, 0), (180, 255, 150)) ### FIX ME
+        green = np.count_nonzero(green_mask==255)
+        gray = np.count_nonzero(gray_mask==255)
+        if green >= gray:
+            steer = 'left'
+        else:
+            steer = 'right'
         return steer
     def hough_lane(self, image):
         self.height, self.width = image.shape[:2]
@@ -353,13 +369,17 @@ class libLANE(object):
 
             if len(line_y) != 0:
                 # DRAW LINE
-                poly_line, poly_param = self.get_poly(line_x, line_y, 'l', deg=1, weight=0.9)
-                # print(poly_param)
-                steer = self.steering(poly_param[2])
+                poly_line, poly_param = self.get_poly(line_x, line_y, 'l', deg=1, weight=0)
+                # print(poly_param[1])
+                steer = self.steering_poly(poly_line, poly_param)
                 y_start = int(poly_line(0))
                 y_end = int(poly_line(self.width))
                 poly_image = self.draw_lines(image, [[[0, y_start, self.width, y_end], ]],
                                                        color=[255, 0, 255], thickness=15, )
-        side_result = self.weighted_img(poly_image, image, 0.8, 1.0, 0)
+                side_result = self.weighted_img(poly_image, image, 0.8, 1.0, 0)
+        else:
+            steer = self.steering_notp(image)
+            side_result = image
+
 
         return steer, side_result

@@ -87,15 +87,15 @@ class libCAMERA(object):
         self.capnum = capnum
 
         if capnum == 1:
-            channel0 = cv2.VideoCapture(cam0port)
+            channel0 = cv2.VideoCapture(cam0port, cv2.CAP_DSHOW)
             if channel0.isOpened():
                 print("Camera Channel0 is enabled!")
         elif capnum == 2:
-            channel0 = cv2.VideoCapture(cam0port)
+            channel0 = cv2.VideoCapture(cam0port, cv2.CAP_DSHOW)
             if channel0.isOpened():
                 print("Camera Channel0 is enabled!")
 
-            channel1 = cv2.VideoCapture(cam1port)
+            channel1 = cv2.VideoCapture(cam1port, cv2.CAP_DSHOW)
             if channel1.isOpened():
                 print("Camera Channel1 is enabled!")
 

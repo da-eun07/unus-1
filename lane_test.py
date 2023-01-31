@@ -7,11 +7,11 @@ import Vision.cam_util_func as cam_util
 # 1
 # image
 lane_detection = lane_util.libLANE()
-image = cv2.imread('./record/30_16-41-27.jpg')
-cv2.imshow('im', image)
+image = cv2.imread('./record/green.jpg')
+# cv2.imshow('im', image)
 
 _, pre = lane_detection.hough_lane(image)
-cv2.imshow('pre', pre)
+cv2.imshow('hough', pre)
 steer, poly = lane_detection.side_lane(image)
 cv2.imshow('p',poly)
 print(steer)
@@ -54,20 +54,13 @@ cv2.destroyAllWindows()
 # cam
 
 cam = cam_util.libCAMERA()
-ch0, ch1 = cam.initial_setting(cam0port=0, cam1port=1, capnum=1) ### For MAC OS
+ch0, ch1 = cam.initial_setting_1080(cam0port=0, cam1port=1, capnum=1) ### For MAC OS
 # ch0, ch1 = cam.initial_setting_window(cam0port=0, cam1port=1, capnum=1) ### For WINDOW OS
 lane_detection = lane_util.libLANE()
 
 while True:
     _, frame0= cam.camera_read(ch0)
     cam.image_show(frame0)
-    t_frame = Bird.bev(frame0)
-    pre = lane_detection.preprocess2(frame0, 'r')
-    prea = lane_detection.preprocess2(frame0, 'a')
-    cv2.imshow('pre', pre)
-    cv2.imshow('rea', prea)
-    lane = lane_detection.add_lane(t_frame, 2)
-    cv2.imshow('r', lane)
 
     if cam.loop_break():
         break
