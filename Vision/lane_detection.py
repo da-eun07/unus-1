@@ -321,7 +321,7 @@ class libLANE(object):
         elif hfs > 760:
             steer = 'left'
         else:
-            steer = 'straight'
+            steer = 'forward'
 
         return steer
     def hough_lane(self, image):

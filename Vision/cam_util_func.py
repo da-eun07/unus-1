@@ -101,7 +101,7 @@ class libCAMERA(object):
 
         return channel0, channel1
 
-    def initial_setting_window(self, cam0port=0, cam1port=1, capnum=1):
+    def initial_setting_480(self, cam0port=0, cam1port=1, capnum=1):
         # OpenCV Initial Setting
         print("OpenCV Version:", cv2.__version__)
         channel0 = None
@@ -109,19 +109,47 @@ class libCAMERA(object):
         self.capnum = capnum
 
         if capnum == 1:
-            channel0 = cv2.VideoCapture(cam0port, cv2.CAP_MSMF)
+            channel0 = cv2.VideoCapture(cam0port)
+            channel0.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            channel0.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            if channel0.isOpened():
+                print("Camera Channel0 is enabled!")
+        elif capnum == 2:
+            channel0 = cv2.VideoCapture(cam0port)
+            channel0.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            channel0.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            if channel0.isOpened():
+                print("Camera Channel0 is enabled!")
+
+            channel1 = cv2.VideoCapture(cam1port)
+            channel1.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            channel1.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            if channel1.isOpened():
+                print("Camera Channel1 is enabled!")
+
+        return channel0, channel1
+
+    def initial_setting_1080(self, cam0port=0, cam1port=1, capnum=1):
+        # OpenCV Initial Setting
+        print("OpenCV Version:", cv2.__version__)
+        channel0 = None
+        channel1 = None
+        self.capnum = capnum
+
+        if capnum == 1:
+            channel0 = cv2.VideoCapture(cam0port)
             channel0.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
             channel0.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
             if channel0.isOpened():
                 print("Camera Channel0 is enabled!")
         elif capnum == 2:
-            channel0 = cv2.VideoCapture(cam0port, cv2.CAP_MSMF)
+            channel0 = cv2.VideoCapture(cam0port)
             channel0.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
             channel0.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
             if channel0.isOpened():
                 print("Camera Channel0 is enabled!")
 
-            channel1 = cv2.VideoCapture(cam1port, cv2.CAP_MSMF)
+            channel1 = cv2.VideoCapture(cam1port)
             channel1.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
             channel1.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
             if channel1.isOpened():
