@@ -5,7 +5,6 @@ np.set_printoptions(threshold=sys.maxsize, linewidth=150)
 
 SATURATION = 150
 
-
 class libLANE(object):
     def __init__(self):
         self.height = 0
@@ -75,6 +74,10 @@ class libLANE(object):
             [[(0, self.height - 50), (0, 0),
               (self.width /2 - 140, self.height - 50), (self.width /2 - 140, 0)]],
             dtype=np.int32)
+        side_roi = np.array(
+            [[(200, self.height), (200, 0),
+              (self.width, 0), (self.width, self.height)]],
+            dtype=np.int32)
 
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         white = cv2.inRange(hsv, (0, 0, 160), (180, 255, 255))  ### FIX ME
@@ -89,8 +92,10 @@ class libLANE(object):
             cropped_image = self.region_of_interest(canny_image, np.array([a_roi], np.int32))
         elif roi == 'r':
             cropped_image = self.region_of_interest(canny_image, np.array([r_roi], np.int32))
-        else:
+        elif roi == 'l':
             cropped_image = self.region_of_interest(canny_image, np.array([l_roi], np.int32))
+        else:
+            cropped_image = self.region_of_interest(canny_image, np.array([side_roi], np.int32))
         i = cropped_image > 0
         cropped_image[i] = 255
         return cropped_image
@@ -166,8 +171,9 @@ class libLANE(object):
             self.poly_data_c = poly_param
 
         poly = np.poly1d(poly_param)
-        return poly
+        return poly, poly_param
 
+    # PLAN A : USING ABOVE CAM
     def red_center(self, image):
         self.height, self.width = image.shape[:2]
         self.min_y = 0
@@ -202,32 +208,14 @@ class libLANE(object):
                         c_lines_x.extend([x1, x2])
                         c_lines_y.extend([y1, y2])
 
-            center_line = self.get_poly(c_lines_y, c_lines_x, 'c', deg=1,)
-        
+            center_line, _ = self.get_poly(c_lines_y, c_lines_x, 'c', deg=1, )
+
             x_start = int(center_line(0))
             x_end = int(center_line(self.height))
-            center_image = self.draw_lines(image, [[[x_start, 0, x_end, self.height], ]], color=[255, 0, 0],thickness=7, )
+            center_image = self.draw_lines(image, [[[x_start, 0, x_end, self.height], ]], color=[255, 0, 0],
+                                           thickness=7, )
 
         return center_line, center_image
-
-    def steering(self, center):
-        right = 0
-        left = 0
-        for cen in center:
-            diff = int(self.width/2) - cen
-            if diff < 0:
-                # print("go right")
-                right += 1
-            else:
-                # print("go left")
-                left += 1
-
-            if right>left:
-                steer = 'r'
-            else:
-                steer = 'l'
-        return steer
-
     def right_lane(self, image, deg):
         self.height, self.width = image.shape[:2]
         self.min_y = 0
@@ -256,12 +244,12 @@ class libLANE(object):
             if len(right_line_y) != 0:
                 # Drawing POLY (deg=2)
                 if deg == 2:
-                    poly_r = self.get_poly(right_line_y, right_line_x, 'r', deg, 0.75)
+                    poly_r, _ = self.get_poly(right_line_y, right_line_x, 'r', deg, 0.75)
                     poly_image_r = self.draw_poly(image, poly_r, self.min_y, self.max_y, color=[0, 255, 0], thickness=7)
 
                 # Drawing LINE (deg=1)
                 else:
-                    poly_line_r = self.get_poly(right_line_y, right_line_x, 'r', deg, 0.75)
+                    poly_line_r, _ = self.get_poly(right_line_y, right_line_x, 'r', deg, 0.75)
                     x_start_r = int(poly_line_r(self.max_y))
                     x_end_r = int(poly_line_r(self.min_y))
                     poly_image_r = self.draw_lines(image, [[[x_start_r, self.max_y, x_end_r, self.min_y], ]], color=[0, 255, 0], thickness=7, )
@@ -297,12 +285,12 @@ class libLANE(object):
             if len(left_line_y) != 0:
                 # Drawing POLY (deg=2)
                 if deg == 2:
-                    poly_l = self.get_poly(left_line_y, left_line_x, 'l', deg, weight=0.9)
+                    poly_l, _ = self.get_poly(left_line_y, left_line_x, 'l', deg, weight=0.9)
                     poly_image_l = self.draw_poly(image, poly_l, self.min_y, self.max_y, color=[255, 0, 0], thickness=7)
 
                 # Drawing LINE (deg=1)
                 else:
-                    poly_line_l = self.get_poly(left_line_y, left_line_x, 'l', deg, weight=0.9)
+                    poly_line_l, _ = self.get_poly(left_line_y, left_line_x, 'l', deg, weight=0.9)
 
                     x_start_l = int(poly_line_l(self.max_y))
                     x_end_l = int(poly_line_l(self.min_y))
@@ -326,6 +314,16 @@ class libLANE(object):
 
         return result
 
+    # PLAN B : USING SIDE CAM
+    def steering(self, hfs):
+        if hfs < 320:
+            steer = 'right'
+        elif hfs > 760:
+            steer = 'left'
+        else:
+            steer = 'straight'
+
+        return steer
     def hough_lane(self, image):
         self.height, self.width = image.shape[:2]
 
@@ -338,4 +336,30 @@ class libLANE(object):
             line_image = self.draw_lines(image, lines, color=[0, 0, 255], thickness=15)
             hough_result = self.weighted_img(line_image, image, 0.8, 1.0, 0)
 
-        return hough_result
+        return lines, hough_result
+    def side_lane(self, image):
+        lines, hough = self.hough_lane(image)
+        line_x = []
+        line_y = []
+        side_result = np.zeros((image.shape[0], image.shape[1], 3), dtype=np.uint8)
+
+        if lines is not None:
+            for line in lines:
+                for x1, y1, x2, y2 in line:
+                    slope = (y2 - y1) / (x2 - x1)
+                    if np.abs(slope) < 0.5:
+                        line_x.extend([x1, x2])
+                        line_y.extend([y1, y2])
+
+            if len(line_y) != 0:
+                # DRAW LINE
+                poly_line, poly_param = self.get_poly(line_x, line_y, 'l', deg=1, weight=0.9)
+                # print(poly_param)
+                steer = self.steering(poly_param[2])
+                y_start = int(poly_line(0))
+                y_end = int(poly_line(self.width))
+                poly_image = self.draw_lines(image, [[[0, y_start, self.width, y_end], ]],
+                                                       color=[255, 0, 255], thickness=15, )
+        side_result = self.weighted_img(poly_image, image, 0.8, 1.0, 0)
+
+        return steer, side_result

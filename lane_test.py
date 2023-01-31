@@ -1,26 +1,23 @@
 # -*- coding: utf-8 -*-
 import cv2
-import Vision.lane_util_func as lane_util
+import Vision.lane_detection as lane_util
 import Vision.cam_util_func as cam_util
-import Vision.bird_eye_view as Bird
 
-'''
+
 # 1
 # image
 lane_detection = lane_util.libLANE()
-image = cv2.imread('./test_images/27_16-20-09.jpg')
-# cv2.imshow('im',image)
-t_frame = Bird.bev(image)
-# cv2.imshow('t',t_frame)
-_, red = lane_detection.red_center(t_frame)
-pre = lane_detection.preprocess2(t_frame, 'r')
-cv2.imshow('r', pre)
-cv2.imshow('r', red)
-result = lane_detection.add_lane(t_frame,2)
+image = cv2.imread('./record/30_16-41-27.jpg')
+cv2.imshow('im', image)
 
-cv2.imshow('result', result)
+_, pre = lane_detection.hough_lane(image)
+cv2.imshow('pre', pre)
+steer, poly = lane_detection.side_lane(image)
+cv2.imshow('p',poly)
+print(steer)
+
 cv2.waitKey(0)
-'''
+
 
 
 '''
@@ -52,7 +49,7 @@ cv2.destroyAllWindows()
 
 '''
 
-
+'''
 # 3
 # cam
 
@@ -79,3 +76,4 @@ while True:
 
 # Release
 cv2.destroyAllWindows()
+'''

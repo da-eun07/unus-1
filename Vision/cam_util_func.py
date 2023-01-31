@@ -1,7 +1,8 @@
+# CODE FROM SKKU
 import sys
-import cv2                           # pip install opencv
-import numpy as np                   # pip install numpy
-import matplotlib.pyplot as plt      # pip install matplotlib
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
 import datetime
 np.set_printoptions(threshold=sys.maxsize, linewidth=150)
 
