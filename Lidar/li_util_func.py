@@ -1,3 +1,4 @@
+# CODE FROM SKKU
 import sys
 import numpy as np
 from rplidar import RPLidar

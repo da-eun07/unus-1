@@ -3,7 +3,7 @@ import numpy as np
 import time
 from pyrplidar import PyRPlidar
 
-PortNum="/dev/tty.usbserial-11430"   # Fix Me
+PortNum="/dev/tty.usbserial-114430"   # Fix Me
 MAX_DATA = 1500   # 2000마다 데이터 띄움
 DIS_UP = 3000   # 1000mm
 DIS_DOWN = 150
@@ -79,9 +79,3 @@ for scan in scan_generator():
     else :
         ang = np.append(ang, angle)
         dis = np.append(dis, distance)
-
-
-    
-
-
-

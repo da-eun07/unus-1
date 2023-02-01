@@ -3,6 +3,9 @@ import Vision.cam_util_func as cam_util
 import Vision.lane_detection as lane_util
 import Vision.traffic_light_detection as tf_util
 import cv2
+from socket import *
+from struct import iter_unpack
+import numpy as np
 
 # DRIVE
 # MISSION_1 : AVOID OBSTACLE
@@ -17,14 +20,31 @@ else:
     print("Invalid Input")
     exit()
 
+#################### Check before Test ####################
 # ARDUINO CONNECTION
-ser = ar_util.libARDUINO()  ### FIX ME
-comm = ser.init('COM7', 9600)
+ser = ar_util.libARDUINO()
+comm = ser.init('/dev/tty.usbmodem14301', 9600) #COM7
 # CAMERA CONNECTION
 cam = cam_util.libCAMERA()
-ch0, ch1 = cam.initial_setting(cam0port=0, cam1port=1, capnum=2)
+ch0, ch1 = cam.initial_setting_480(cam0port=1, cam1port=0, capnum=2) # if window cam.initial_setting
+print("help! new terminal::python Lidar/lidar_shoot.py")
+#################### Check before Test ####################
 # LIDAR CONNECTION
-Li_PortNum = "/dev/tty.usbserial-11410"  ### FIX ME
+#### initialize #####
+serverSock = socket(AF_INET, SOCK_STREAM)
+serverSock.bind(('127.0.0.1',8080)) # 본인 무선 LAN IPv4도 가능
+serverSock.listen(1)
+connectionSock, addr = serverSock.accept()
+print("접속 IP: {}".format(str(addr)))
+## 클라이언트로부터 메세지 한번 받기 ##
+data = connectionSock.recv(1024)
+print("IP{}의 message: {}".format(str(addr), data))
+
+uvR=np.array([])
+dis_detected=0
+buffer=np.array([])  # 버퍼 역할
+# 수신 반복 횟수 측정
+LI_COUNT = 0
 
 # LANE DETECTION
 LD = lane_util.libLANE()
@@ -35,11 +55,12 @@ OB_COUNT = 0
 TRAFFIC_COUNT = 0 # <-> Distance
 
 def send_command(command, speed):
+    # speed min: 25
     global AR_COUNT
     if AR_COUNT == speed:  ### FIX ME
+        print(command)
         comm.write(command.encode())
         AR_COUNT = 0
-
 
 # MAIN LOOP
 while True:
@@ -57,16 +78,47 @@ while True:
     if (MODE == "DRIVE"):
         # print('Lets Drive')
         if steer == 'forward':
-            send_command("0", speed=1)
+            send_command("0", speed=25)
         elif steer == 'right':
-            send_command("1", speed=1)
+            send_command("1", speed=25)
         elif steer == 'left':
-            send_command("-1", speed=1)
+            send_command("-1", speed=25)
         else:  # stop
-            send_command("10", speed=1)
+            send_command("10", speed=25)
 
     elif (MODE == "MISSION_1"):
         # print('Lets Avoid Obstacle')
+        # LIDAR COMMUNICATION
+        # 데이터 수신
+        data = connectionSock.recv(3000)  # Fix me
+        # 데이터 확인
+        for y in iter_unpack('HHH', data):  # get u, v, r
+
+            if y[0] == 65531:  # 1) start
+                LI_COUNT += 1
+                j = 0
+            elif y[0] == 65532:  # 3-1) criteria - Detected
+                print("{}th Criteria : Detected".format(LI_COUNT))
+                dis_detected = round(y[2] * 0.4)
+
+            elif y[0] == 65533:  # 3-2) criteria - none
+                print("{}th Criteria : Nothing".format(LI_COUNT))
+                dis_detected = 0
+
+            elif y[0] == 65534:  # 4) finish
+                uvR = buffer
+                buffer = np.array([])
+                print("mean value / u = {}, v = {}, R = {}".format(np.nanmean(uvR[:][0]), np.nanmean(uvR[:][1]),
+                                                                   np.nanmean(uvR[:][2])))
+                print("통신, 데이터 개수 {}개!".format(LI_COUNT, uvR.size // 2))
+                print(LI_COUNT)
+
+            else:  # 2) u, v, R data
+                u_converted = round(y[0] * 0.01)
+                v_converted = round(y[1] * 0.0075)
+                R_converted = round(y[2] * 0.4)
+                buffer = np.append(buffer, np.array([u_converted, v_converted, R_converted]))
+
         # GET OBSTACLE INFO
         LI = lidar_util.libLIDAR()
         OBSTACLE = lidar_util.get_signal()
@@ -80,13 +132,13 @@ while True:
                 send_command("2", speed=30)  ### FIX ME
         else:  # If no obstacles
             if steer == 'forward':
-                send_command("0", speed=1)
+                send_command("0", speed=25)
             elif steer == 'right':
-                send_command("1", speed=1)
+                send_command("1", speed=25)
             elif steer == 'left':
-                send_command("-1", speed=1)
+                send_command("-1", speed=25)
             else:  # stop
-                send_command("10", speed=1)
+                send_command("10", speed=25)
         if OB_COUNT == 2:  # No more obstacles
             print("Avoided all Obstacles")
     elif (MODE == "MISSION_2"):
@@ -101,13 +153,13 @@ while True:
 
         if TRAFFIC == 'GREEN' or TRAFFIC == 'NOT_YET': ### FIX ME : HOW FAR?
             if steer == 'forward':
-                send_command("0", speed=1)
+                send_command("0", speed=25)
             elif steer == 'right':
-                send_command("1", speed=1)
+                send_command("1", speed=25)
             elif steer == 'left':
-                send_command("-1", speed=1)
+                send_command("-1", speed=25)
         elif TRAFFIC == 'RED' or TRAFFIC == 'YELLOW':  # stop
-            send_command("10", speed=1)
+            send_command("10", speed=25)
     elif (MODE == "MISSION_3"):
         # print("mission2: parking")
         send_command("100")
@@ -117,3 +169,8 @@ while True:
         break
     if cam.capture(frame0):
         continue
+
+### 본 통신 끝 ####
+data = connectionSock.recv(1024)
+print(data.decode("utf-8"))
+print("Complete sending message")

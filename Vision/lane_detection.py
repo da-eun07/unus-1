@@ -322,12 +322,13 @@ class libLANE(object):
         elif hfs > self.height * (2/3):
             steer = 'left'
         else:
-            if param[1] > 0.070: ### FIX ME
+            if param[1] > 0.1: ### FIX ME
                 steer = 'right'
-            elif param[1] < -0.070:
+            elif param[1] < -0.1:
                 steer = 'left'
             else:
                 steer = 'forward'
+        # print("steer by poly")
         return steer
     def steering_notp(self, image):
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -339,6 +340,7 @@ class libLANE(object):
             steer = 'left'
         else:
             steer = 'right'
+        # print("steer by colour")
         return steer
     def hough_lane(self, image):
         self.height, self.width = image.shape[:2]
@@ -363,7 +365,7 @@ class libLANE(object):
             for line in lines:
                 for x1, y1, x2, y2 in line:
                     slope = (y2 - y1) / (x2 - x1)
-                    if np.abs(slope) < 0.5:
+                    if np.abs(slope) < 0.3: ### FIX ME
                         line_x.extend([x1, x2])
                         line_y.extend([y1, y2])
 
@@ -380,6 +382,5 @@ class libLANE(object):
         else:
             steer = self.steering_notp(image)
             side_result = image
-
 
         return steer, side_result
