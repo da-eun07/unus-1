@@ -373,14 +373,14 @@ class libLANE(object):
                 # DRAW LINE
                 poly_line, poly_param = self.get_poly(line_x, line_y, 'l', deg=1, weight=0)
                 # print(poly_param[1])
-                steer = self.steering_poly(poly_line, poly_param)
+                c_steer = self.steering_poly(poly_line, poly_param)
                 y_start = int(poly_line(0))
                 y_end = int(poly_line(self.width))
                 poly_image = self.draw_lines(image, [[[0, y_start, self.width, y_end], ]],
                                                        color=[255, 0, 255], thickness=15, )
                 side_result = self.weighted_img(poly_image, image, 0.8, 1.0, 0)
         else:
-            steer = self.steering_notp(image)
+            c_steer = self.steering_notp(image)
             side_result = image
 
-        return steer, side_result
+        return c_steer, side_result

@@ -8,7 +8,7 @@ import numpy as np
 import time
 from pyrplidar import PyRPlidar
 
-PortNum= '/dev/tty.usbserial-14430' ### Fix Me
+PortNum= '/dev/tty.usbserial-111440' ### Fix Me
 MAX_DATA = 2000   # 2000마다 데이터 띄움
 DIS_UP = 3000   # 1000mm
 DIS_DOWN = 150
@@ -223,22 +223,16 @@ if (__name__ == '__main__'):
             j=0
             for y in iter_unpack('HHH', x):
                 j+=1
-            print("{}th 통신, 데이터 개수 총 {}개".format(count,j-3))
+            print("{}th 통신".format(count))
         
             count+=1
 
-
-
             ang=np.array([0])
             dis=np.array([0])
-       
 
         else :
             ang = np.append(ang, angle)
             dis = np.append(dis, distance)
-
-
-
 
     print("asdfasdfasdfafasdf")
 

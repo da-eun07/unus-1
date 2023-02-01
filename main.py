@@ -23,11 +23,11 @@ else:
 #################### Check before Test ####################
 # ARDUINO CONNECTION
 ser = ar_util.libARDUINO()
-comm = ser.init('/dev/tty.usbmodem14301', 9600) #COM7
+comm = ser.init('/dev/tty.usbmodem1114101', 9600) #COM7
 # CAMERA CONNECTION
 cam = cam_util.libCAMERA()
-ch0, ch1 = cam.initial_setting_480(cam0port=1, cam1port=0, capnum=2) # if window cam.initial_setting
-print("help! new terminal::python Lidar/lidar_shoot.py")
+ch0, ch1 = cam.initial_setting_480(cam0port=0, cam1port=1, capnum=2) # if window cam.initial_setting
+print("new terminal-python Lidar/lidar_shoot.py")
 #################### Check before Test ####################
 # LIDAR CONNECTION
 #### initialize #####
@@ -55,7 +55,7 @@ OB_COUNT = 0
 TRAFFIC_COUNT = 0 # <-> Distance
 
 def send_command(command, speed):
-    # speed min: 25
+    # speed min: 15
     global AR_COUNT
     if AR_COUNT == speed:  ### FIX ME
         print(command)
@@ -78,13 +78,13 @@ while True:
     if (MODE == "DRIVE"):
         # print('Lets Drive')
         if steer == 'forward':
-            send_command("0", speed=25)
+            send_command("0", speed=20)
         elif steer == 'right':
-            send_command("1", speed=25)
+            send_command("1", speed=20)
         elif steer == 'left':
-            send_command("-1", speed=25)
+            send_command("-1", speed=20)
         else:  # stop
-            send_command("10", speed=25)
+            send_command("10", speed=20)
 
     elif (MODE == "MISSION_1"):
         # print('Lets Avoid Obstacle')
@@ -93,18 +93,15 @@ while True:
         data = connectionSock.recv(3000)  # Fix me
         # 데이터 확인
         for y in iter_unpack('HHH', data):  # get u, v, r
-
             if y[0] == 65531:  # 1) start
                 LI_COUNT += 1
                 j = 0
             elif y[0] == 65532:  # 3-1) criteria - Detected
                 print("{}th Criteria : Detected".format(LI_COUNT))
                 dis_detected = round(y[2] * 0.4)
-
             elif y[0] == 65533:  # 3-2) criteria - none
                 print("{}th Criteria : Nothing".format(LI_COUNT))
                 dis_detected = 0
-
             elif y[0] == 65534:  # 4) finish
                 uvR = buffer
                 buffer = np.array([])
@@ -112,7 +109,6 @@ while True:
                                                                    np.nanmean(uvR[:][2])))
                 print("통신, 데이터 개수 {}개!".format(LI_COUNT, uvR.size // 2))
                 print(LI_COUNT)
-
             else:  # 2) u, v, R data
                 u_converted = round(y[0] * 0.01)
                 v_converted = round(y[1] * 0.0075)
@@ -120,8 +116,8 @@ while True:
                 buffer = np.append(buffer, np.array([u_converted, v_converted, R_converted]))
 
         # GET OBSTACLE INFO
-        LI = lidar_util.libLIDAR()
-        OBSTACLE = lidar_util.get_signal()
+        #LI = lidar_util.libLIDAR()
+        OBSTACLE = None
         if OBSTACLE:
             OB_COUNT += 1
             if OBSTACLE == 'First Detect':  # Left Obstacle
@@ -132,15 +128,16 @@ while True:
                 send_command("2", speed=30)  ### FIX ME
         else:  # If no obstacles
             if steer == 'forward':
-                send_command("0", speed=25)
+                send_command("0", speed=15)
             elif steer == 'right':
-                send_command("1", speed=25)
+                send_command("1", speed=15)
             elif steer == 'left':
-                send_command("-1", speed=25)
+                send_command("-1", speed=15)
             else:  # stop
-                send_command("10", speed=25)
+                send_command("10", speed=15)
         if OB_COUNT == 2:  # No more obstacles
             print("Avoided all Obstacles")
+
     elif (MODE == "MISSION_2"):
         # print('traffic light')
         # GET TRAFFIC LIGHT INFO USING frame1

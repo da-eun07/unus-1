@@ -1,7 +1,8 @@
+# code from SKKU
 import sys
 import time
-import serial                        # pip install serial
-import numpy as np                   # pip install numpy
+import serial
+import numpy as np
 
 np.set_printoptions(threshold=sys.maxsize, linewidth=150)
 WAIT_TIME = 2
