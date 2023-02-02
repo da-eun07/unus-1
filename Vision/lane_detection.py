@@ -359,7 +359,8 @@ class libLANE(object):
         lines, hough = self.hough_lane(image)
         line_x = []
         line_y = []
-        side_result = np.zeros((image.shape[0], image.shape[1], 3), dtype=np.uint8)
+        # side_result = np.zeros((image.shape[0], image.shape[1], 3), dtype=np.uint8)
+        c_steer = 'forward'
 
         if lines is not None:
             for line in lines:
@@ -371,7 +372,7 @@ class libLANE(object):
 
             if len(line_y) != 0:
                 # DRAW LINE
-                poly_line, poly_param = self.get_poly(line_x, line_y, 'l', deg=1, weight=0)
+                poly_line, poly_param = self.get_poly(line_x, line_y, 'l', deg=1, weight=0)  ### FIX ME
                 # print(poly_param[1])
                 c_steer = self.steering_poly(poly_line, poly_param)
                 y_start = int(poly_line(0))
@@ -379,8 +380,10 @@ class libLANE(object):
                 poly_image = self.draw_lines(image, [[[0, y_start, self.width, y_end], ]],
                                                        color=[255, 0, 255], thickness=15, )
                 side_result = self.weighted_img(poly_image, image, 0.8, 1.0, 0)
+            else:
+                c_steer = self.steering_notp(image)
+                side_result = image
         else:
-            c_steer = self.steering_notp(image)
             side_result = image
 
         return c_steer, side_result

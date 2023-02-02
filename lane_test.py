@@ -7,7 +7,7 @@ import Vision.cam_util_func as cam_util
 # 1
 # image
 lane_detection = lane_util.libLANE()
-image = cv2.imread('./record/01_16-06-35.jpg')
+image = cv2.imread('./record/01_16-06-34.jpg')
 # cv2.imshow('im', image)
 
 _, pre = lane_detection.hough_lane(image)

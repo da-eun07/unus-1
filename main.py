@@ -23,7 +23,7 @@ else:
 #################### Check before Test ####################
 # ARDUINO CONNECTION
 ser = ar_util.libARDUINO()
-comm = ser.init('/dev/tty.usbmodem1114101', 9600) #COM7
+comm = ser.init('/dev/tty.usbmodem114101', 9600) #COM7
 # CAMERA CONNECTION
 cam = cam_util.libCAMERA()
 ch0, ch1 = cam.initial_setting_480(cam0port=0, cam1port=1, capnum=2) # if window cam.initial_setting
@@ -116,7 +116,6 @@ while True:
                 buffer = np.append(buffer, np.array([u_converted, v_converted, R_converted]))
 
         # GET OBSTACLE INFO
-        #LI = lidar_util.libLIDAR()
         OBSTACLE = None
         if OBSTACLE:
             OB_COUNT += 1
@@ -137,7 +136,6 @@ while True:
                 send_command("10", speed=15)
         if OB_COUNT == 2:  # No more obstacles
             print("Avoided all Obstacles")
-
     elif (MODE == "MISSION_2"):
         # print('traffic light')
         # GET TRAFFIC LIGHT INFO USING frame1
@@ -149,17 +147,19 @@ while True:
             TRAFFIC = 'NOT_YET'
 
         if TRAFFIC == 'GREEN' or TRAFFIC == 'NOT_YET': ### FIX ME : HOW FAR?
+            send_command("0", speed=15) # Go
+            '''
             if steer == 'forward':
-                send_command("0", speed=25)
+                send_command("0", speed=15)
             elif steer == 'right':
-                send_command("1", speed=25)
+                send_command("1", speed=15)
             elif steer == 'left':
-                send_command("-1", speed=25)
+                send_command("-1", speed=15)
+            '''
         elif TRAFFIC == 'RED' or TRAFFIC == 'YELLOW':  # stop
-            send_command("10", speed=25)
+            send_command("10", speed=15) # Stop
     elif (MODE == "MISSION_3"):
-        # print("mission2: parking")
-        send_command("100")
+        print("mission2: parking")
 
     if cam.loop_break():
         ser.close()
