@@ -3,7 +3,7 @@ import cv2
 import Vision.lane_detection as lane_util
 import Vision.cam_util_func as cam_util
 
-
+'''
 # 1
 # image
 lane_detection = lane_util.libLANE()
@@ -18,7 +18,7 @@ print(steer)
 
 cv2.waitKey(0)
 
-
+'''
 
 '''
 # 2
@@ -52,17 +52,17 @@ cv2.destroyAllWindows()
 
 # 3
 # cam
-'''
+
 cam = cam_util.libCAMERA()
-ch0, ch1 = cam.initial_setting_480(cam0port=0, cam1port=1, capnum=1) ### For MAC OS
+ch0, ch1 = cam.initial_setting_480(cam0port=0, cam1port=0, capnum=1) ### For MAC OS
 # ch0, ch1 = cam.initial_setting_window(cam0port=0, cam1port=1, capnum=1) ### For WINDOW OS
 lane_detection = lane_util.libLANE()
 
 while True:
     _, frame0= cam.camera_read(ch0)
     cam.image_show(frame0)
-    _, pre = lane_detection.hough_lane(frame0)
-    cv2.imshow('hough', pre)
+    white = lane_detection.preprocess2(frame0, 'a')
+    cv2.imshow('hough', white)
     steer, poly = lane_detection.side_lane(frame0)
     cv2.imshow('p', poly)
     print(steer)
@@ -74,4 +74,3 @@ while True:
 
 # Release
 cv2.destroyAllWindows()
-'''

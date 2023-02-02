@@ -53,12 +53,14 @@ global AR_COUNT
 AR_COUNT = 0
 OB_COUNT = 0
 TRAFFIC_COUNT = 0 # <-> Distance
+steer_hist = []
+NEW_SIG_COUNT = 0
 
 def send_command(command, speed):
     # speed min: 15
     global AR_COUNT
     if AR_COUNT == speed:  ### FIX ME
-        print(command)
+        print('To Arduino: ' + command)
         comm.write(command.encode())
         AR_COUNT = 0
 
@@ -73,18 +75,29 @@ while True:
     # _, hough = LD.hough_lane(frame0)
     # cv2.imshow('hough image', hough)
     steer, lane_image = LD.side_lane(frame0)
+    steer_hist.append(steer)
     cv2.imshow('lane image', lane_image)
 
     if (MODE == "DRIVE"):
         # print('Lets Drive')
-        if steer == 'forward':
-            send_command("0", speed=20)
-        elif steer == 'right':
-            send_command("1", speed=20)
-        elif steer == 'left':
-            send_command("-1", speed=20)
-        else:  # stop
-            send_command("10", speed=20)
+        if NEW_SIG_COUNT == 0:
+            if steer_hist[-1] != steer:
+                NEW_SIG_COUNT += 1
+        elif NEW_SIG_COUNT == 1 or NEW_SIG_COUNT == 2:
+            if steer_hist[-1] == steer:
+                NEW_SIG_COUNT += 1
+            else:
+                NEW_SIG_COUNT = 0
+        elif NEW_SIG_COUNT == 3:
+            NEW_SIG_COUNT = 0
+            if steer == 'forward':
+                send_command("0", speed=1)
+            elif steer == 'right':
+                send_command("1", speed=1)
+            elif steer == 'left':
+                send_command("-1", speed=1)
+            else:  # stop
+                send_command("10", speed=1)
 
     elif (MODE == "MISSION_1"):
         # print('Lets Avoid Obstacle')

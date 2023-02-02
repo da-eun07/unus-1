@@ -5,7 +5,7 @@ H_SAT = 500
 L_SAT = 150 #150
 RED, GREEN, BLUE, YELLOW = (0, 1, 2, 3)
 COLOR = ("RED", "GREEN", "BLUE", "YELLOW")
-HUE_THRESHOLD = ([4, 176], [40, 80], [110, 130], [20, 40])
+HUE_THRESHOLD = ([4, 176], [40, 90], [110, 130], [15, 40])
 
 class libTRAFFIC(object):
     def __init__(self):
