@@ -7,23 +7,12 @@ from socket import *
 from struct import iter_unpack
 import numpy as np
 
-# DRIVE
 # MISSION_1 : AVOID OBSTACLE
-# MISSION_2 : TRAFFIC LIGHT
-# MISSION_3 : PARKING
-mode_list = ["DRIVE", "MISSION_1", "MISSION_2", "MISSION_3"]
-select_mode = int(input("Select mode (0:Drive, 1:Mission_1, 2: Mission_2, 3: Mission_3): "))
-if select_mode == 0 or select_mode == 1 or select_mode == 2 or select_mode == 3:
-    MODE = mode_list[select_mode]
-    print("MODE: " + MODE)
-else:
-    print("Invalid Input")
-    exit()
 
 #################### Check before Test ####################
 # ARDUINO CONNECTION
 ser = ar_util.libARDUINO()
-comm = ser.init('/dev/tty.usbmodem101', 9600) #COM7
+comm = ser.init('/dev/tty.usbmodem114101', 9600) #COM7
 # CAMERA CONNECTION
 cam = cam_util.libCAMERA()
 ch0, ch1 = cam.initial_setting_480(cam0port=0, cam1port=1, capnum=2) # if window cam.initial_setting
@@ -81,14 +70,24 @@ while True:
 
     if (MODE == "DRIVE"):
         # print('Lets Drive')
-        if steer == 'forward':
-            send_command("0", speed=15)
-        elif steer == 'right':
-            send_command("1", speed=15)
-        elif steer == 'left':
-            send_command("-1", speed=15)
-        else:  # stop
-            send_command("10", speed=15)
+        if new_sig_count == 0:
+            if steer_hist[-1] != steer:
+                new_sig_count += 1
+        elif new_sig_count == 1 or new_sig_count == 2:
+            if steer_hist[-1] == steer:
+                new_sig_count += 1
+            else:
+                new_sig_count = 0
+        elif new_sig_count == 3:
+            new_sig_count = 0
+            if steer == 'forward':
+                send_command("0", speed=1)
+            elif steer == 'right':
+                send_command("1", speed=1)
+            elif steer == 'left':
+                send_command("-1", speed=1)
+            else:  # stop
+                send_command("10", speed=1)
 
     elif (MODE == "MISSION_1"):
         # print('Lets Avoid Obstacle')

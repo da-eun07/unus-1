@@ -244,7 +244,7 @@ class libLANE(object):
             if len(right_line_y) != 0:
                 # Drawing POLY (deg=2)
                 if deg == 2:
-                    poly_r, _ = self.get_poly(right_line_y, right_line_x, 'r', deg, 0.75)
+                    poly_r, _ = self.get_poly(right_line_y, right_line_x, 'r', deg, weight=0.75)
                     poly_image_r = self.draw_poly(image, poly_r, self.min_y, self.max_y, color=[0, 255, 0], thickness=7)
 
                 # Drawing LINE (deg=1)
@@ -308,7 +308,7 @@ class libLANE(object):
         # l_b, left = self.left_lane(image, deg)
         # center_line, center = self.red_center(image)
         center = self.draw_lines(image, [[[823, self.max_y, 775, self.min_y], ]], color=[0, 0, 255], thickness=7, )
-        #lane = right + left
+        # lane = right + left
         lane_center = self.weighted_img(right, center, 1.0, 1.0, 0)
         result = self.weighted_img(lane_center, image, 0.8, 1.0, 0)
 
@@ -317,9 +317,9 @@ class libLANE(object):
     # PLAN B : USING SIDE CAM
     def steering_poly(self, poly, param):
         hfs = poly(self.width/2)
-        if hfs < self.height * (2/5):
+        if hfs < self.height * (5/15):
             steer = 'right'
-        elif hfs > self.height * (3/5):
+        elif hfs > self.height * (10/15):
             steer = 'left'
         else:
             if param[1] > 0.12: ### FIX ME
@@ -372,7 +372,7 @@ class libLANE(object):
 
             if len(line_y) != 0:
                 # DRAW LINE
-                poly_line, poly_param = self.get_poly(line_x, line_y, 'l', deg=1, weight=0.2)  ### FIX ME
+                poly_line, poly_param = self.get_poly(line_x, line_y, 'l', deg=1, weight=0.3)  ### FIX ME
                 # print(poly_param[1])
                 c_steer = self.steering_poly(poly_line, poly_param)
                 y_start = int(poly_line(0))

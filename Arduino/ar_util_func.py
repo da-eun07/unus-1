@@ -15,7 +15,7 @@ class libARDUINO(object):
 
     # Arduino Serial USB Port Setting
     def init(self, port, baudrate):
-        ser = serial.Serial()
+        ser = serial.Serial(timeout=1)
         ser.port, self.port = port, port
         ser.baudrate, self.baudrate = baudrate, baudrate
         ser.open()
