@@ -11,15 +11,12 @@ lane_detection = lane_util.libLANE()
 image = cv2.imread('./record/01_16-06-34.jpg')
 # cv2.imshow('im', image)
 
-_, pre = lane_detection.hough_lane(image)
-cv2.imshow('hough', pre)
-steer, poly = lane_detection.side_lane(image)
-cv2.imshow('p',poly)
-print(steer)
+pre = lane_detection.preprocess2(image, 'r')
+cv2.imshow('pre', pre)
 
 cv2.waitKey(0)
-
 '''
+
 
 '''
 # 2
@@ -55,22 +52,15 @@ cv2.destroyAllWindows()
 # cam
 
 cam = cam_util.libCAMERA()
-ch0, ch1 = cam.initial_setting_1080(cam0port=0, cam1port=0, capnum=1) ### For MAC OS
+ch0, ch1 = cam.initial_setting_480(cam0port=0, cam1port=0, capnum=1) ### For MAC OS
 # ch0, ch1 = cam.initial_setting_window(cam0port=0, cam1port=1, capnum=1) ### For WINDOW OS
 lane_detection = lane_util.libLANE()
 
 while True:
     _, frame0= cam.camera_read(ch0)
     cam.image_show(frame0)
-    t_frame0 = bev.bev(frame0)
-    cv2.imshow('t', t_frame0)
-    white = lane_detection.preprocess2(t_frame0, 'a')
-    cv2.imshow('hough', white)
-    #_, right = lane_detection.right_lane(frame0, 2)
-    #cv2.imshow('p', right)
-    lane = lane_detection.add_lane(t_frame0, 2)
-    cv2.imshow('l', lane)
-
+    pre = lane_detection.preprocess2(frame0, 'a')
+    cv2.imshow('pre', pre)
     if cam.loop_break():
         break
     if cam.capture(frame0):

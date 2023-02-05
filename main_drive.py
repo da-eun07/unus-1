@@ -21,8 +21,7 @@ LD = lane_util.libLANE()
 global ar_count
 ar_count = 0
 steer_hist = ['forward']
-pre_sig = 'start'
-new_sig_count = 0
+new_sig_count = 1
 
 def send_command(command, speed):
     # speed min: 15
@@ -31,18 +30,16 @@ def send_command(command, speed):
         print('To Arduino: ' + command)
         comm.write(command.encode())
         print(datetime.now().timestamp())
-        data = comm.readline()[:-2]
-        print(data)
         ar_count = 0
 def steer_signal(steer):
     if steer == 'forward':
-        send_command("0", speed=15)
+        send_command("3", speed=1)
     elif steer == 'right':
-        send_command("1", speed=15)
+        send_command("4", speed=1)
     elif steer == 'left':
-        send_command("-1", speed=15)
+        send_command("2", speed=1)
     else:  # stop
-        send_command("10", speed=15)
+        send_command("10", speed=1)
 
 # MAIN LOOP
 while True:
@@ -61,21 +58,20 @@ while True:
         # print('0')
         if steer_hist[-1] != steer:
             new_sig_count = 1
-    elif new_sig_count == 1:
+    elif new_sig_count == 1 or new_sig_count == 2:
         # print('1')
         if steer_hist[-1] == steer:
             new_sig_count += 1
         else:
             new_sig_count = 0
-    elif new_sig_count >= 2:
+    elif new_sig_count >= 3:
         # print('2')
-        if pre_sig != steer:
-            steer_signal(steer)
-            pre_sig = steer
-        else:
-            new_sig_count = 0
+        steer_signal(steer)
+        new_sig_count = 0
+
+    #print(steer)
     steer_hist.append(steer)
-    # print(steer)
+
     if cam.loop_break():
         ser.close()
         break

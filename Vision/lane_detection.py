@@ -67,8 +67,8 @@ class libLANE(object):
               (self.width, 0), (self.width, self.height - 70)]],
             dtype=np.int32)
         r_roi = np.array(
-            [[(self.width / 2 - 140, self.height - 50), (self.width / 2 - 140, 0),
-              (self.width, 0), (self.width, self.height - 50)]],
+            [[(self.width/2, self.height), (self.width/2, 0),
+              (self.width, 0), (self.width, self.height)]],
             dtype=np.int32)
         l_roi = np.array(
             [[(0, self.height - 50), (0, 0),
@@ -85,7 +85,7 @@ class libLANE(object):
         green_imask = green_mask > 0
         white[green_imask] = 0
         blur_image = cv2.GaussianBlur(white, (5, 5), 0)
-        open = self.morphology(blur_image, (4, 4), mode="opening")
+        open = self.morphology(blur_image, (20, 20), mode="opening")
         close = self.morphology(open, (8, 8), mode="closing")
         canny_image = cv2.Canny(close, 130, 250)
         if roi == 'a' :
@@ -98,7 +98,7 @@ class libLANE(object):
             cropped_image = self.region_of_interest(canny_image, np.array([side_roi], np.int32))
         i = cropped_image > 0
         cropped_image[i] = 255
-        return white
+        return cropped_image
     def preprocess3(self, image, roi='a'):
         a_roi = np.array(
             [[(0, self.height - 70), (0, 0),
@@ -170,8 +170,19 @@ class libLANE(object):
                 poly_param = poly_param * (1 - weight) + self.poly_data_c * (weight)
             self.poly_data_c = poly_param
 
-        poly = np.poly1d(poly_param)
-        return poly, poly_param
+        return poly_param
+    def poly_eval(self, coeffs, x):
+        reversed_coeffs = coeffs[::-1]
+        y = 0
+        for i, c in enumerate(reversed_coeffs):
+            y += c * x ** i
+        return y
+    def make_poly_1d(self, param):
+        new_param = []
+        for i in range(len(param)):
+            if param[i] != 0:
+                new_param.append(param[i])
+        return np.poly1d(new_param)
 
     # PLAN A : USING ABOVE CAM
     def red_center(self, image):
@@ -215,7 +226,11 @@ class libLANE(object):
             center_image = self.draw_lines(image, [[[x_start, 0, x_end, self.height], ]], color=[255, 0, 0],
                                            thickness=7, )
 
-        return center_line, center_image
+        return x_end, center_image
+    def get_center_poly(self, param):
+        offset = 823 - self.poly_eval(param, self.height)
+        param[-1] = param[-1] + offset
+        return param
     def right_lane(self, image, deg):
         self.height, self.width = image.shape[:2]
         self.min_y = 0
@@ -223,6 +238,7 @@ class libLANE(object):
         right_line_x = []
         right_line_y = []
         poly_r = None
+        poly_param_r = [0, 0, 0]
         poly_image_r = np.zeros((image.shape[0],image.shape[1],3),dtype=np.uint8)
 
         right_image = self.preprocess2(image, "r")
@@ -244,21 +260,22 @@ class libLANE(object):
             if len(right_line_y) != 0:
                 # Drawing POLY (deg=2)
                 if deg == 2:
-                    poly_r, _ = self.get_poly(right_line_y, right_line_x, 'r', deg, weight=0.75)
+                    poly_param_r = self.get_poly(right_line_y, right_line_x, 'r', deg, weight=0.75)
+                    poly_r = np.poly1d(poly_param_r)
                     poly_image_r = self.draw_poly(image, poly_r, self.min_y, self.max_y, color=[0, 255, 0], thickness=7)
-
                 # Drawing LINE (deg=1)
                 else:
-                    poly_line_r, _ = self.get_poly(right_line_y, right_line_x, 'r', deg, 0.75)
+                    poly_param_r = self.get_poly(right_line_y, right_line_x, 'r', deg, 0.75)
+                    poly_line_r = np.poly1d(poly_param_r)
                     x_start_r = int(poly_line_r(self.max_y))
                     x_end_r = int(poly_line_r(self.min_y))
                     poly_image_r = self.draw_lines(image, [[[x_start_r, self.max_y, x_end_r, self.min_y], ]], color=[0, 255, 0], thickness=7, )
 
 
         if self.line_bool_r is False:
-            return poly_r, poly_image_r
+            return poly_param_r, poly_image_r
         else:
-            return poly_r, poly_image_r
+            return poly_param_r, poly_image_r
     def left_lane(self, image, deg):
         self.height, self.width = image.shape[:2]
         self.min_y = 0
@@ -304,15 +321,17 @@ class libLANE(object):
         self.min_y = 0
         self.max_y = int(self.height)
 
-        r_b, right = self.right_lane(image, deg)
+        poly_param_r, right = self.right_lane(image, deg)
+        path_param = self.get_center_poly(poly_param_r)
+        poly_c = self.make_poly_1d(path_param)
+        center = self.draw_poly(image, poly_c, self.min_y, self.max_y, color=[0, 255, 0], thickness=7)
         # l_b, left = self.left_lane(image, deg)
-        # center_line, center = self.red_center(image)
-        center = self.draw_lines(image, [[[823, self.max_y, 775, self.min_y], ]], color=[0, 0, 255], thickness=7, )
+        # center = self.draw_lines(image, [[[823, self.max_y, 775, self.min_y], ]], color=[0, 0, 255], thickness=7, )
         # lane = right + left
         lane_center = self.weighted_img(right, center, 1.0, 1.0, 0)
         result = self.weighted_img(lane_center, image, 0.8, 1.0, 0)
 
-        return result
+        return result, path_param
 
     # PLAN B : USING SIDE CAM
     def steering_poly(self, poly, param):
@@ -333,9 +352,11 @@ class libLANE(object):
     def steering_notp(self, image):
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         green_mask = cv2.inRange(hsv, (30, 20, 23), (70, 255, 255))  ### FIX ME
-        gray_mask = cv2.inRange(hsv, (0, 0, 0), (180, 255, 150)) ### FIX ME
+        gray_mask = cv2.inRange(hsv, (0, 0, 0), (180, 50, 100)) ### FIX ME
         green = np.count_nonzero(green_mask==255)
         gray = np.count_nonzero(gray_mask==255)
+        #print(green)
+        #print(gray)
         if green >= gray:
             steer = 'left'
         else:
@@ -346,7 +367,7 @@ class libLANE(object):
         self.height, self.width = image.shape[:2]
 
         pre_image = self.preprocess2(image, 'a')
-        lines = self.hough_transform(pre_image, rho=1, theta=np.pi/180, threshold=10, mll=10, mlg=20, mode="lineP")
+        lines = self.hough_transform(pre_image, rho=1, theta=np.pi/180, threshold=10, mll=40, mlg=20, mode="lineP")
 
         if lines is None:
             hough_result = image
@@ -372,7 +393,8 @@ class libLANE(object):
 
             if len(line_y) != 0:
                 # DRAW LINE
-                poly_line, poly_param = self.get_poly(line_x, line_y, 'l', deg=1, weight=0.3)  ### FIX ME
+                poly_param = self.get_poly(line_x, line_y, 'l', deg=1, weight=0.3)  ### FIX ME
+                poly_line = self.make_poly_1d(poly_param)
                 # print(poly_param[1])
                 c_steer = self.steering_poly(poly_line, poly_param)
                 y_start = int(poly_line(0))
