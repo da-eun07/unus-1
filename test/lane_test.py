@@ -8,16 +8,16 @@ import Vision.bird_eye_view as bev
 # 1
 # image
 lane_detection = lane_util.libLANE()
-image = cv2.imread('./record/01_16-06-34.jpg')
+image = cv2.imread('./record/05_19-54-11.jpg')
 # cv2.imshow('im', image)
 
-pre = lane_detection.preprocess2(image, 'r')
+steer, pre = lane_detection.preprocess2(image)
+print(steer)
 cv2.imshow('pre', pre)
 
 cv2.waitKey(0)
+
 '''
-
-
 '''
 # 2
 # video
@@ -59,8 +59,10 @@ lane_detection = lane_util.libLANE()
 while True:
     _, frame0= cam.camera_read(ch0)
     cam.image_show(frame0)
-    pre = lane_detection.preprocess2(frame0, 'a')
-    cv2.imshow('pre', pre)
+    lane_cand, white, lane = lane_detection.preprocess2(frame0, 'a')
+    cv2.imshow('lc', lane_cand)
+    cv2.imshow('w', white)
+    cv2.imshow('l', lane)
     if cam.loop_break():
         break
     if cam.capture(frame0):

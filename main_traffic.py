@@ -3,6 +3,7 @@ import Vision.cam_util_func as cam_util
 import Vision.lane_detection as lane_util
 import Vision.traffic_light_detection as tf_util
 import cv2
+from datetime import datetime
 
 # MISSION_2 : TRAFFIC LIGHT
 
@@ -22,16 +23,30 @@ TF = tf_util.libTRAFFIC()
 # VARIABLES
 global ar_count
 ar_count = 0
-steer_hist = []
-new_sig_count = 0
+steer_hist = ['forward']
+new_sig_count = 1
 
 def send_command(command, speed):
     # speed min: 15
     global ar_count
-    if ar_count == speed:  ### FIX ME
+    if ar_count >= speed:  ### FIX ME
         print('To Arduino: ' + command)
         comm.write(command.encode())
+        print(datetime.now().timestamp())
         ar_count = 0
+def steer_signal(steer):
+    if steer == 'forward':
+        send_command("3", speed=1)
+    elif steer == 'leftleft':
+        send_command("1", speed=1)
+    elif steer == 'left':
+        send_command("2", speed=1)
+    elif steer == 'right':
+        send_command("4", speed=1)
+    elif steer == 'rightright':
+        send_command("5", speed=1)
+    else:  # stop
+        send_command("9", speed=1)
 
 # MAIN LOOP
 while True:
@@ -44,31 +59,25 @@ while True:
     # _, hough = LD.hough_lane(frame0)
     # cv2.imshow('hough image', hough)
     steer, lane_image = LD.side_lane(frame0)
-    steer_hist.append(steer)
     cv2.imshow('lane image', lane_image)
 
-    if (MODE == "DRIVE"):
-        # print('Lets Drive')
-        if new_sig_count == 0:
-            if steer_hist[-1] != steer:
-                new_sig_count += 1
-        elif new_sig_count == 1 or new_sig_count == 2:
-            if steer_hist[-1] == steer:
-                new_sig_count += 1
-            else:
-                new_sig_count = 0
-        elif new_sig_count == 3:
+    if new_sig_count == 0:
+        # print('0')
+        if steer_hist[-1] != steer:
+            new_sig_count = 1
+    elif new_sig_count == 1 or new_sig_count == 2:
+        # print('1')
+        if steer_hist[-1] == steer:
+            new_sig_count += 1
+        else:
             new_sig_count = 0
-            if steer == 'forward':
-                send_command("0", speed=1)
-            elif steer == 'right':
-                send_command("1", speed=1)
-            elif steer == 'left':
-                send_command("-1", speed=1)
-            else:  # stop
-                send_command("10", speed=1)
+    elif new_sig_count >= 3:
+        # print('2')
+        steer_signal(steer)
+        new_sig_count = 0
+    #print(steer)
+    steer_hist.append(steer)
 
-    # print('traffic light')
     # GET TRAFFIC LIGHT INFO USING frame1
     TRAFFIC_COUNT += 1
 
@@ -79,19 +88,11 @@ while True:
 
     if TRAFFIC == 'GREEN' or TRAFFIC == 'NOT_YET': ### FIX ME : HOW FAR?
         send_command("0", speed=15) # Go
-        '''
-        if steer == 'forward':
-            send_command("0", speed=15)
-        elif steer == 'right':
-            send_command("1", speed=15)
-        elif steer == 'left':
-            send_command("-1", speed=15)
-        '''
     elif TRAFFIC == 'RED' or TRAFFIC == 'YELLOW':  # stop
         send_command("10", speed=15) # Stop
 
     if cam.loop_break():
         ser.close()
         break
-    if cam.capture(frame0):
+    if cam.capture(frame1):
         continue

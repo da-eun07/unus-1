@@ -81,10 +81,16 @@ class libLANE(object):
 
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         white = cv2.inRange(hsv, (0, 0, 160), (180, 255, 255))  ### FIX ME
+        black_mask = cv2.inRange(hsv, (0,0,0), (180, 255,90))
+        open_black = self.morphology(black_mask, (20,20), mode="opening")
+        lane_cand = cv2.dilate(open_black, cv2.getStructuringElement(cv2.MORPH_RECT, (80,80)))
         green_mask = cv2.inRange(hsv, (30, 20, 23), (70, 255, 255))  ### FIX ME
         green_imask = green_mask > 0
         white[green_imask] = 0
-        blur_image = cv2.GaussianBlur(white, (5, 5), 0)
+        lane = white * lane_cand
+        i = lane > 0
+        lane[i] = 255
+        blur_image = cv2.GaussianBlur(lane, (5, 5), 0)
         open = self.morphology(blur_image, (20, 20), mode="opening")
         close = self.morphology(open, (8, 8), mode="closing")
         canny_image = cv2.Canny(close, 130, 250)
@@ -96,41 +102,6 @@ class libLANE(object):
             cropped_image = self.region_of_interest(canny_image, np.array([l_roi], np.int32))
         else:
             cropped_image = self.region_of_interest(canny_image, np.array([side_roi], np.int32))
-        i = cropped_image > 0
-        cropped_image[i] = 255
-        return cropped_image
-    def preprocess3(self, image, roi='a'):
-        a_roi = np.array(
-            [[(0, self.height - 70), (0, 0),
-              (self.width, 0), (self.width, self.height - 70)]],
-            dtype=np.int32)
-        r_roi = np.array(
-            [[(self.width / 2 - 140, self.height - 50), (self.width / 2 - 140, 0),
-              (self.width, 0), (self.width, self.height - 50)]],
-            dtype=np.int32)
-        l_roi = np.array(
-            [[(0, self.height - 50), (0, 0),
-              (self.width / 2 - 140, self.height - 50), (self.width / 2 - 140, 0)]],
-            dtype=np.int32)
-
-        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        h, s, v = cv2.split(hsv_image)
-        v_max = np.max(v)
-        lower_white = np.array([25, 0, int(v_max * 0.6)])
-        upper_white = np.array([130, 25, 255])
-        mask = cv2.inRange(hsv_image, lower_white, upper_white)
-        close = self.morphology(mask, (4, 4), mode="closing")
-        open = self.morphology(close, (4, 4), mode="opening")
-        blur_image = cv2.GaussianBlur(open, (3, 3), 0)
-        canny_image = cv2.Canny(blur_image, 200, 400)
-        if roi == 'a' :
-            cropped_image = self.region_of_interest(canny_image, np.array([a_roi], np.int32))
-        elif roi == 'r':
-            cropped_image = self.region_of_interest(canny_image, np.array([r_roi], np.int32))
-        else:
-            cropped_image = self.region_of_interest(canny_image, np.array([l_roi], np.int32))
-        i = cropped_image > 0
-        cropped_image[i] = 255
         return cropped_image
     def draw_lines(self, image, lines, color=[0, 0, 255], thickness=7):
         line_image = np.zeros((image.shape[0],image.shape[1],3),dtype=np.uint8)
@@ -361,7 +332,6 @@ class libLANE(object):
             steer = 'left'
         else:
             steer = 'right'
-        # print("steer by colour")
         return steer
     def hough_lane(self, image):
         self.height, self.width = image.shape[:2]
@@ -406,6 +376,7 @@ class libLANE(object):
                 c_steer = self.steering_notp(image)
                 side_result = image
         else:
+            c_steer = self.steering_notp(image)
             side_result = image
 
         return c_steer, side_result
