@@ -63,8 +63,8 @@ class libLANE(object):
         return cropped_image
     def preprocess2(self, image, roi='a'):
         a_roi = np.array(
-            [[(0, self.height - 70), (0, 0),
-              (self.width, 0), (self.width, self.height - 70)]],
+            [[(0, self.height-25), (0, 40),
+              (self.width, 40), (self.width, self.height-25)]],
             dtype=np.int32)
         r_roi = np.array(
             [[(self.width/2, self.height), (self.width/2, 0),
@@ -73,10 +73,6 @@ class libLANE(object):
         l_roi = np.array(
             [[(0, self.height - 50), (0, 0),
               (self.width /2 - 140, self.height - 50), (self.width /2 - 140, 0)]],
-            dtype=np.int32)
-        side_roi = np.array(
-            [[(200, self.height), (200, 0),
-              (self.width, 0), (self.width, self.height)]],
             dtype=np.int32)
 
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -91,7 +87,7 @@ class libLANE(object):
         i = lane > 0
         lane[i] = 255
         blur_image = cv2.GaussianBlur(lane, (5, 5), 0)
-        open = self.morphology(blur_image, (20, 20), mode="opening")
+        open = self.morphology(blur_image, (27, 27), mode="opening")
         close = self.morphology(open, (8, 8), mode="closing")
         canny_image = cv2.Canny(close, 130, 250)
         if roi == 'a' :
@@ -101,7 +97,7 @@ class libLANE(object):
         elif roi == 'l':
             cropped_image = self.region_of_interest(canny_image, np.array([l_roi], np.int32))
         else:
-            cropped_image = self.region_of_interest(canny_image, np.array([side_roi], np.int32))
+            cropped_image = canny_image
         return cropped_image
     def draw_lines(self, image, lines, color=[0, 0, 255], thickness=7):
         line_image = np.zeros((image.shape[0],image.shape[1],3),dtype=np.uint8)
@@ -307,14 +303,14 @@ class libLANE(object):
     # PLAN B : USING SIDE CAM
     def steering_poly(self, poly, param):
         hfs = poly(self.width/2)
-        if hfs < self.height * (5/15):
-            steer = 'right'
-        elif hfs > self.height * (10/15):
-            steer = 'left'
+        if hfs < self.height * (4/15):
+            steer = 'rightright'
+        elif hfs > self.height * (11/15):
+            steer = 'leftleft'
         else:
-            if param[1] > 0.12: ### FIX ME
+            if param[1] > 0.105:
                 steer = 'right'
-            elif param[1] < -0.12:
+            elif param[1] < -0.105:
                 steer = 'left'
             else:
                 steer = 'forward'
@@ -322,16 +318,16 @@ class libLANE(object):
         return steer
     def steering_notp(self, image):
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        green_mask = cv2.inRange(hsv, (30, 20, 23), (70, 255, 255))  ### FIX ME
-        gray_mask = cv2.inRange(hsv, (0, 0, 0), (180, 50, 100)) ### FIX ME
+        green_mask = cv2.inRange(hsv, (30, 20, 23), (70, 255, 255))
+        gray_mask = cv2.inRange(hsv, (0,0,0), (180, 255, 90))
         green = np.count_nonzero(green_mask==255)
         gray = np.count_nonzero(gray_mask==255)
         #print(green)
         #print(gray)
         if green >= gray:
-            steer = 'left'
+            steer = 'leftleftleft'
         else:
-            steer = 'right'
+            steer = 'rightrightright'
         return steer
     def hough_lane(self, image):
         self.height, self.width = image.shape[:2]

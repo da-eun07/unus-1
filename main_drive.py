@@ -19,8 +19,8 @@ ch0, ch1 = cam.initial_setting_480(cam0port=0, cam1port=1, capnum=2) # if window
 LD = lane_util.libLANE()
 # VARIABLES
 global ar_count
-ar_count = 0
-steer_hist = ['forward']
+ar_count = 1
+steer_hist = ['right']
 new_sig_count = 1
 
 def send_command(command, speed):
@@ -33,17 +33,24 @@ def send_command(command, speed):
         ar_count = 0
 def steer_signal(steer):
     if steer == 'forward':
-        send_command("3", speed=1)
-    elif steer == 'leftleft':
-        send_command("1", speed=1)
-    elif steer == 'left':
-        send_command("2", speed=1)
-    elif steer == 'right':
         send_command("4", speed=1)
-    elif steer == 'rightright':
+    elif steer == 'leftleftleft':
+        send_command("1", speed=1)
+    elif steer == 'leftleft':
+        send_command("2", speed=1)
+    elif steer == 'left':
+        send_command("3", speed=1)
+    elif steer == 'right':
         send_command("5", speed=1)
+    elif steer == 'rightright':
+        send_command("6", speed=1)
+    elif steer == 'rightrightright':
+        send_command("7", speed=1)
     else:  # stop
         send_command("9", speed=1)
+
+input("Enter")
+steer_signal('forward')
 
 # MAIN LOOP
 while True:
@@ -76,6 +83,7 @@ while True:
     steer_hist.append(steer)
 
     if cam.loop_break():
+        steer_signal("stop")
         ser.close()
         break
     if cam.capture(frame0):

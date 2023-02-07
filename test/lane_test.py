@@ -2,7 +2,7 @@
 import cv2
 import Vision.lane_detection as lane_util
 import Vision.cam_util_func as cam_util
-import Vision.bird_eye_view as bev
+from datetime import datetime
 
 '''
 # 1
@@ -59,10 +59,8 @@ lane_detection = lane_util.libLANE()
 while True:
     _, frame0= cam.camera_read(ch0)
     cam.image_show(frame0)
-    lane_cand, white, lane = lane_detection.preprocess2(frame0, 'a')
-    cv2.imshow('lc', lane_cand)
-    cv2.imshow('w', white)
-    cv2.imshow('l', lane)
+    _, green = lane_detection.steering_notp(frame0)
+    cv2.imshow('g', green)
     if cam.loop_break():
         break
     if cam.capture(frame0):
