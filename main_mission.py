@@ -75,7 +75,7 @@ def steer_signal(steer):
     elif steer == 'stop':  # stop
         send_command("9", speed=1)
     else: # traffic
-        send_command("R", speed=1)
+        send_command("r", speed=1)
 
 input("Enter to start")
 steer_signal('forward')
@@ -90,7 +90,7 @@ while True:
     # GET LANE INFO USING frame0
     # _, hough = LD.hough_lane(frame0)
     # cv2.imshow('hough image', hough)
-    steer, lane_image = LD.side_lane(frame0)
+    steer, lane_image = LD.side_lane(frame0, 'slow')
     cv2.imshow('lane image', lane_image)
 
     if new_sig_count == 0:
@@ -124,7 +124,7 @@ while True:
             dis_detected = round(y[2] * 0.4)
             new_obs_sig_count += 1
         elif y[0] == 65533:  # 3-2) criteria - none
-            print("{}th Criteria : Nothing".format(li_count))
+            # print("{}th Criteria : Nothing".format(li_count))
             dis_detected = 0
             new_obs_sig_count = 0
         elif y[0] == 65534:  # 4) finish
@@ -153,16 +153,15 @@ while True:
 
 ### 본 통신 끝 ####
 data = connectionSock.recv(1024)
-print(data.decode("utf-8"))
-print("Complete sending message")
+# print(data.decode("utf-8"))
+print("Lidar communication finished")
 
 # OBSTACLE
 while True:
     if comm.readable():  # 시리얼 읽기
-        if comm.readline().decode('utf-8').rstrip() == 'of':
+        if comm.readline().decode("utf-8").rstrip() == 'of':
             print("Finished obstacle")
             break
-
 
 ar_count = 1
 steer_hist = ['right']
@@ -186,7 +185,7 @@ while True:
     if traffic == 'stop':
         new_tf_sig_count += 1
     if new_tf_sig_count == 5:
-        steer_signal("stop")
+        steer_signal('red_stop')
         break
 
     if new_sig_count == 0:

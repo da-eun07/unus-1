@@ -92,31 +92,21 @@ class libTRAFFIC(object):
     # UNUS MADED
     def preprocess(self, image):
         region_of_interest_vertices = np.array(
-            [[(0, self.height), (self.width * (2 / 12), self.height * (7 / 12)),
-              (self.width * (10/ 12), self.height * (7 / 12)), (self.width, self.height)]],
+            [[(0, 150), (0, 0),
+              (self.width, 0), (self.width, 150)]],
             dtype=np.int32) ### FIX ME
-
-        gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        hist = cv2.equalizeHist(gray_image)
-        open = self.morphology(hist, (5, 5), mode="opening")
-        close = self.morphology(open, (11, 11), mode="closing")
-        blur_image = cv2.GaussianBlur(close, (5, 5), 0)
-        canny_image = cv2.Canny(blur_image, 130, 250)
-        cropped_image = self.region_of_interest(canny_image, np.array([region_of_interest_vertices], np.int32), )
+        cropped_image = self.region_of_interest(image, np.array([region_of_interest_vertices], np.int32), )
 
         return cropped_image
-    def color_detection(frame):
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        green_lower = np.array([40, 40, 40])
-        green_upper = np.array([70, 255, 255])
-        green_mask = cv2.inRange(hsv, green_lower, green_upper)
-        green = cv2.bitwise_and(frame, frame, mask=green_mask)
-        red_lower = np.array([0, 50, 50])
-        red_upper = np.array([10, 255, 255])
-        red_mask = cv2.inRange(hsv, red_lower, red_upper)
-        red = cv2.bitwise_and(frame, frame, mask=red_mask)
+    def color_detection(self, image):
+        pre = self.preprocess(image)
+        hsv = cv2.cvtColor(pre, cv2.COLOR_BGR2HSV)
+        green_mask = cv2.inRange(hsv, np.array([40, 40, 40]), np.array([70, 255, 255]))
+        green = cv2.bitwise_and(pre, pre, mask=green_mask)
+        red_mask = cv2.inRange(hsv, np.array([0, 50, 50]), np.array([10, 255, 255]))
+        red = cv2.bitwise_and(pre, pre, mask=red_mask)
 
         if np.count_nonzero(green_mask) > np.count_nonzero(red_mask):
-            return 'go'  # go
+            return 'go'
         elif np.count_nonzero(red_mask) > np.count_nonzero(green_mask):
             return 'stop'

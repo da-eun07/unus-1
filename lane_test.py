@@ -58,13 +58,13 @@ LD = lane_util.libLANE()
 
 while True:
     _, frame0= cam.camera_read(ch0)
-    _, gre, gra = LD.steering_notp(frame0)
-    cv2.imshow('green', gre)
-    cv2.imshow('gra',gra)
-    # _, hough = LD.hough_lane(frame0)
-    # cv2.imshow('hough image', hough)
-    # steer, lane_image = LD.side_lane(frame0)
-    # cv2.imshow('lane image', lane_image)
+    #_, gre, gra = LD.steering_notp(frame0)
+    #cv2.imshow('green', gre)
+    #cv2.imshow('gra',gra)
+    _, hough = LD.hough_lane(frame0)
+    cv2.imshow('hough image', hough)
+    steer, lane_image = LD.side_lane(frame0)
+    cv2.imshow('lane image', lane_image)
     if cam.loop_break():
         break
     if cam.capture(frame0):

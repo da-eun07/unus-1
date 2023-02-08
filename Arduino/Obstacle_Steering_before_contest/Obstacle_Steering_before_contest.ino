@@ -12,13 +12,13 @@ int motor_right2 = 7;
 
 #define DELAY 10
 #define TOLERANCE 2
-#define FORWARD_ANGLE 517
-#define ANGLE2 30
-#define ANGLE6 28
-#define ANGLE7 62
-#define ANGLE1 59
-#define ANGLE35 18
-#define MOTOR_SPEED 80
+#define FORWARD_ANGLE 520
+#define ANGLE2 38
+#define ANGLE6 35
+#define ANGLE7 69
+#define ANGLE1 68
+#define ANGLE35 25
+#define MOTOR_SPEED 60
 
 void motor_left(int motorSpeed){
   motor_backward(motor_dir_con1, motor_dir_con2, motorSpeed);
@@ -80,7 +80,7 @@ void loop() {
   if (Serial.available() > 0) {
     int command = Serial.read();
     if (command == 10) {
-      Serial.println("Command Recieved!");
+      //Serial.println("Command Recieved!");
       return;
     }
     if (command == '9') {
@@ -95,12 +95,13 @@ void loop() {
      if (command == '8') { //장애물 피하기 Rule based 진행
       motor_forward(motor_left1, motor_left2, 80); 
       motor_forward(motor_right1, motor_right2, 80); 
-      delay_toward('1', 6000);
-      delay_toward('7', 4100);
-      delay_toward('4', 4000);
-      delay_toward('7', 4500);
-      delay_toward('1', 4100);
-      delay_toward('4', 3000);
+      delay_toward('1', 5700); // m:5700
+      delay_toward('7', 4600); // m:4600
+      delay_toward('4', 2000); // m:2000
+      delay_toward('7', 4900); // m:5600
+      delay_toward('1', 4600); // m:4600
+      delay_toward('4', 1000); // m:1000
+      Serial.println("of");
       return;
     }
     else {

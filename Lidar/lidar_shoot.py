@@ -8,15 +8,15 @@ import numpy as np
 import time
 from pyrplidar import PyRPlidar
 
-PortNum= '/dev/tty.usbserial-1130' ### Fix Me
+PortNum= '/dev/tty.usbserial-111440' ### Fix Me
 MAX_DATA = 2000   # 2000마다 데이터 띄움
 DIS_UP = 3000   # 1000mm
 DIS_DOWN = 150
-ANGLE_UP = 10
+ANGLE_UP = 20
 ANGLE_DOWN = -10
 ROT = 82
 RANGE = 10 #각도 범위
-DIST = 1250 #거리
+DIST = 1500 #거리
 DIS_MIN = 150
 count = 0
 

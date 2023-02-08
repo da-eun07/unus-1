@@ -74,6 +74,10 @@ class libLANE(object):
             [[(0, self.height - 50), (0, 0),
               (self.width /2 - 140, self.height - 50), (self.width /2 - 140, 0)]],
             dtype=np.int32)
+        slow_roi = np.array(
+            [[(0, self.height-50), (0, 100),
+              (self.width, 100), (self.width, self.height-50)]],
+            dtype=np.int32)
 
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         white = cv2.inRange(hsv, (0, 0, 160), (180, 255, 255))  ### FIX ME
@@ -96,6 +100,8 @@ class libLANE(object):
             cropped_image = self.region_of_interest(canny_image, np.array([r_roi], np.int32))
         elif roi == 'l':
             cropped_image = self.region_of_interest(canny_image, np.array([l_roi], np.int32))
+        elif roi == 'slow':
+            cropped_image = self.region_of_interest(canny_image, np.array([slow_roi], np.int32))
         else:
             cropped_image = canny_image
         return cropped_image
@@ -333,10 +339,10 @@ class libLANE(object):
         else:
             steer = 'rightrightright'
         return steer
-    def hough_lane(self, image):
+    def hough_lane(self, image, roi='a'):
         self.height, self.width = image.shape[:2]
 
-        pre_image = self.preprocess2(image, 'a')
+        pre_image = self.preprocess2(image, roi)
         lines = self.hough_transform(pre_image, rho=1, theta=np.pi/180, threshold=10, mll=40, mlg=20, mode="lineP")
 
         if lines is None:
@@ -346,12 +352,10 @@ class libLANE(object):
             hough_result = self.weighted_img(line_image, image, 0.8, 1.0, 0)
 
         return lines, hough_result
-    def side_lane(self, image):
-        lines, hough = self.hough_lane(image)
+    def side_lane(self, image, roi='a'):
+        lines, hough = self.hough_lane(image, roi)
         line_x = []
         line_y = []
-        # side_result = np.zeros((image.shape[0], image.shape[1], 3), dtype=np.uint8)
-        c_steer = 'forward'
 
         if lines is not None:
             for line in lines:

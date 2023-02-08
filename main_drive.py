@@ -51,7 +51,7 @@ def steer_signal(steer):
     elif steer == 'stop':  # stop
         send_command("9", speed=1)
     else: # traffic
-        send_command("R", speed=1)
+        send_command("r", speed=1)
 
 input("Enter to start")
 steer_signal('forward')
