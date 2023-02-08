@@ -54,13 +54,17 @@ cv2.destroyAllWindows()
 cam = cam_util.libCAMERA()
 ch0, ch1 = cam.initial_setting_480(cam0port=0, cam1port=0, capnum=1) ### For MAC OS
 # ch0, ch1 = cam.initial_setting_window(cam0port=0, cam1port=1, capnum=1) ### For WINDOW OS
-lane_detection = lane_util.libLANE()
+LD = lane_util.libLANE()
 
 while True:
     _, frame0= cam.camera_read(ch0)
-    cam.image_show(frame0)
-    _, green = lane_detection.steering_notp(frame0)
-    cv2.imshow('g', green)
+    _, gre, gra = LD.steering_notp(frame0)
+    cv2.imshow('green', gre)
+    cv2.imshow('gra',gra)
+    # _, hough = LD.hough_lane(frame0)
+    # cv2.imshow('hough image', hough)
+    # steer, lane_image = LD.side_lane(frame0)
+    # cv2.imshow('lane image', lane_image)
     if cam.loop_break():
         break
     if cam.capture(frame0):

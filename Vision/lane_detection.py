@@ -63,8 +63,8 @@ class libLANE(object):
         return cropped_image
     def preprocess2(self, image, roi='a'):
         a_roi = np.array(
-            [[(0, self.height-25), (0, 40),
-              (self.width, 40), (self.width, self.height-25)]],
+            [[(0, self.height-20), (0, 70),
+              (self.width, 70), (self.width, self.height-20)]],
             dtype=np.int32)
         r_roi = np.array(
             [[(self.width/2, self.height), (self.width/2, 0),
@@ -303,9 +303,9 @@ class libLANE(object):
     # PLAN B : USING SIDE CAM
     def steering_poly(self, poly, param):
         hfs = poly(self.width/2)
-        if hfs < self.height * (1/10):
+        if hfs < self.height * (2/10):
             steer = 'rightright'
-        elif hfs > self.height * (9/10):
+        elif hfs > self.height * (8/10):
             steer = 'leftleft'
         elif hfs < self.height * (3/10):
             steer = 'right'

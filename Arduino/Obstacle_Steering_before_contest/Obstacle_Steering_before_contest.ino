@@ -18,7 +18,7 @@ int motor_right2 = 7;
 #define ANGLE7 62
 #define ANGLE1 59
 #define ANGLE35 18
-#define MOTOR_SPEED 150  //80 //170 
+#define MOTOR_SPEED 80
 
 void motor_left(int motorSpeed){
   motor_backward(motor_dir_con1, motor_dir_con2, motorSpeed);
@@ -95,12 +95,12 @@ void loop() {
      if (command == '8') { //장애물 피하기 Rule based 진행
       motor_forward(motor_left1, motor_left2, 80); 
       motor_forward(motor_right1, motor_right2, 80); 
-      delay_toward(1, 6000);
-      delay_toward(7, 4100);
-      delay_toward(4, 4000);
-      delay_toward(7, 4500);
-      delay_toward(1, 4100);
-      delay_toward(4, 3000);
+      delay_toward('1', 6000);
+      delay_toward('7', 4100);
+      delay_toward('4', 4000);
+      delay_toward('7', 4500);
+      delay_toward('1', 4100);
+      delay_toward('4', 3000);
       return;
     }
     else {
@@ -108,8 +108,8 @@ void loop() {
       motor_forward(motor_right1, motor_right2, MOTOR_SPEED);   
     }
     if (command == 'r') {
-      motor_forward(motor_left1, motor_left2, MOTOR_SPEED); 
-      motor_forward(motor_right1, motor_right2, MOTOR_SPEED); 
+      motor_forward(motor_left1, motor_left2, 80); 
+      motor_forward(motor_right1, motor_right2, 80); 
       delay(4100); //영상 기준으로 세팅
       motor_hold(motor_left1, motor_left2);
       motor_hold(motor_right1, motor_right2);
@@ -123,38 +123,26 @@ void loop() {
     int desiredValue = 0;
     if (command == '1') {
       desiredValue = FORWARD_ANGLE  + ANGLE1 + 2;
-      motor_forward(motor_left1, motor_left2, MOTOR_SPEED - 10); 
-      motor_forward(motor_right1, motor_right2, MOTOR_SPEED - 10);     //-10 
+      motor_forward(motor_left1, motor_left2, MOTOR_SPEED); 
+      motor_forward(motor_right1, motor_right2, MOTOR_SPEED);     //-10 
     }
     else if (command == '2') {
       desiredValue = FORWARD_ANGLE + ANGLE2 + 2;
-      motor_forward(motor_left1, motor_left2, MOTOR_SPEED); 
-      motor_forward(motor_right1, motor_right2, MOTOR_SPEED);          //0
     }
     else if (command == '3') {
       desiredValue = FORWARD_ANGLE + ANGLE35 + 2;
-      motor_forward(motor_left1, motor_left2, MOTOR_SPEED + 10); 
-      motor_forward(motor_right1, motor_right2, MOTOR_SPEED + 10);    //+10 
     }
     else if (command == '4') {
       desiredValue = FORWARD_ANGLE;
-      motor_forward(motor_left1, motor_left2, MOTOR_SPEED +20);       //+ 20 
-      motor_forward(motor_right1, motor_right2, MOTOR_SPEED +20); 
     } 
     else if (command == '5') {
       desiredValue = FORWARD_ANGLE - ANGLE35 + 3;
-      motor_forward(motor_left1, motor_left2, MOTOR_SPEED +10 ); 
-      motor_forward(motor_right1, motor_right2, MOTOR_SPEED);
     }  
     else if (command == '6') {
       desiredValue = FORWARD_ANGLE - ANGLE6;
-      motor_forward(motor_left1, motor_left2, MOTOR_SPEED); 
-      motor_forward(motor_right1, motor_right2, MOTOR_SPEED);  
     }
     else if (command == '7') {
       desiredValue = FORWARD_ANGLE - ANGLE7 + 1;
-      motor_forward(motor_left1, motor_left2, MOTOR_SPEED - 10); 
-      motor_forward(motor_right1, motor_right2, MOTOR_SPEED - 10);  
     }
     
     desiredValue = min(max(desiredValue, 447), 600);

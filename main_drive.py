@@ -73,17 +73,17 @@ while True:
         # print('0')
         if steer_hist[-1] != steer:
             new_sig_count = 1
-    elif new_sig_count == 1 or new_sig_count == 2:
+    elif new_sig_count == 1:
         # print('1')
         if steer_hist[-1] == steer:
             new_sig_count += 1
         else:
             new_sig_count = 0
-    elif new_sig_count >= 3:
+    elif new_sig_count >= 2:
         # print('2')
         steer_signal(steer)
         new_sig_count = 0
-    #print(steer)
+    # print(steer)
     steer_hist.append(steer)
 
     if cam.loop_break():

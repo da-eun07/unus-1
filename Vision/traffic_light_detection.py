@@ -10,6 +10,13 @@ HUE_THRESHOLD = ([4, 176], [40, 90], [110, 130], [15, 40])
 class libTRAFFIC(object):
     def __init__(self):
         self.height, self.width, self.dim = (0, 0, 0)
+    def region_of_interest(self, image, vertices):
+        mask = np.zeros_like(image)
+        if len(image.shape) > 2:
+            self.match_mask_color = (255,255,255)
+        cv2.fillPoly(mask, vertices, self.match_mask_color)
+        masked_image = cv2.bitwise_and(image, mask)
+        return masked_image
     def hsv_conversion(self, image):
         return cv2.cvtColor(image.copy(), cv2.COLOR_BGR2HSV)
     def gray_conversion(self, image):
@@ -81,3 +88,35 @@ class libTRAFFIC(object):
             cv2.imshow('Traffic image', replica)
 
         return result
+
+    # UNUS MADED
+    def preprocess(self, image):
+        region_of_interest_vertices = np.array(
+            [[(0, self.height), (self.width * (2 / 12), self.height * (7 / 12)),
+              (self.width * (10/ 12), self.height * (7 / 12)), (self.width, self.height)]],
+            dtype=np.int32) ### FIX ME
+
+        gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        hist = cv2.equalizeHist(gray_image)
+        open = self.morphology(hist, (5, 5), mode="opening")
+        close = self.morphology(open, (11, 11), mode="closing")
+        blur_image = cv2.GaussianBlur(close, (5, 5), 0)
+        canny_image = cv2.Canny(blur_image, 130, 250)
+        cropped_image = self.region_of_interest(canny_image, np.array([region_of_interest_vertices], np.int32), )
+
+        return cropped_image
+    def color_detection(frame):
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        green_lower = np.array([40, 40, 40])
+        green_upper = np.array([70, 255, 255])
+        green_mask = cv2.inRange(hsv, green_lower, green_upper)
+        green = cv2.bitwise_and(frame, frame, mask=green_mask)
+        red_lower = np.array([0, 50, 50])
+        red_upper = np.array([10, 255, 255])
+        red_mask = cv2.inRange(hsv, red_lower, red_upper)
+        red = cv2.bitwise_and(frame, frame, mask=red_mask)
+
+        if np.count_nonzero(green_mask) > np.count_nonzero(red_mask):
+            return 'go'  # go
+        elif np.count_nonzero(red_mask) > np.count_nonzero(green_mask):
+            return 'stop'
