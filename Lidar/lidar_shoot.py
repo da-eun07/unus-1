@@ -16,7 +16,7 @@ ANGLE_UP = 10
 ANGLE_DOWN = -10
 ROT = 82
 RANGE = 10 #각도 범위
-DIST = 1200 #거리
+DIST = 1250 #거리
 DIS_MIN = 150
 count = 0
 

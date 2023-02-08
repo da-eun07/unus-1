@@ -6,7 +6,6 @@ from socket import *
 from struct import iter_unpack
 import numpy as np
 from datetime import datetime
-import time
 
 # MISSION_1 : AVOID OBSTACLE
 
@@ -40,10 +39,9 @@ li_count = 0
 LD = lane_util.libLANE()
 # VARIABLES
 global ar_count
-ar_count = 0
-steer_hist = ['forward']
+ar_count = 1
+steer_hist = ['right']
 new_sig_count = 1
-obs_count = 0
 new_obs_sig_count = 0
 
 def send_command(command, speed):
@@ -56,19 +54,30 @@ def send_command(command, speed):
         ar_count = 0
 def steer_signal(steer):
     if steer == 'forward':
-        send_command("3", speed=1)
-    elif steer == 'leftleft':
-        send_command("1", speed=1)
-    elif steer == 'left':
-        send_command("2", speed=1)
-    elif steer == 'right':
         send_command("4", speed=1)
-    elif steer == 'rightright':
+    elif steer == 'leftleftleft':
+        send_command("1", speed=1)
+    elif steer == 'leftleft':
+        send_command("2", speed=1)
+    elif steer == 'left':
+        send_command("3", speed=1)
+    elif steer == 'right':
         send_command("5", speed=1)
-    else:  # stop
+    elif steer == 'rightright':
+        send_command("6", speed=1)
+    elif steer == 'rightrightright':
+        send_command("7", speed=1)
+    elif steer == 'obstacle':
+        send_command("8", speed=1)
+    elif steer == 'stop':  # stop
         send_command("9", speed=1)
+    else: # traffic
+        send_command("R", speed=1)
 
-# MAIN LOOP
+input("Enter to start")
+steer_signal('forward')
+
+# MAIN LOOP : LANE + OBSTACLE
 while True:
     ar_count += 1
     # CAMERA ON
@@ -81,19 +90,22 @@ while True:
     steer, lane_image = LD.side_lane(frame0)
     cv2.imshow('lane image', lane_image)
 
-    while obs_count == 0 or obs_count >= 3:
-        if new_sig_count == 0:
-            if steer_hist[-1] != steer:
-                new_sig_count = 1
-        elif new_sig_count == 1 or new_sig_count == 2:
-            if steer_hist[-1] == steer:
-                new_sig_count += 1
-            else:
-                new_sig_count = 0
-        elif new_sig_count >= 3:
-            steer_signal(steer)
+    if new_sig_count == 0:
+        # print('0')
+        if steer_hist[-1] != steer:
+            new_sig_count = 1
+    elif new_sig_count == 1 or new_sig_count == 2:
+        # print('1')
+        if steer_hist[-1] == steer:
+            new_sig_count += 1
+        else:
             new_sig_count = 0
-        steer_hist.append(steer)
+    elif new_sig_count >= 3:
+        # print('2')
+        steer_signal(steer)
+        new_sig_count = 0
+    # print(steer)
+    steer_hist.append(steer)
 
     # LIDAR COMMUNICATION
     # GET OBSTACLE INFO
@@ -125,26 +137,12 @@ while True:
             R_converted = round(y[2] * 0.4)
             buffer = np.append(buffer, np.array([u_converted, v_converted, R_converted]))
 
-    if new_obs_sig_count == 50:  ### FIX ME
-        obs_count += 1
-        if obs_count == 1: # Avoiding First Obstacle
-            steer_signal('leftleft')
-            time.sleep(2)
-            steer_signal('right')
-            time.sleep(1)
-            steer_signal('forward')
-            time.sleep(1)
-            new_obs_sig_count = 0
-        elif obs_count == 2: # Avoiding Second Obstacle
-            steer_signal('rightright')
-            time.sleep(2)
-            steer_signal('left')
-            time.sleep(1)
-            steer_signal('forward')
-        else:
-            print("Avoided all Obstacles")
+    if new_obs_sig_count == 10:  ### FIX ME
+        steer_signal("obstacle")
+        break
 
     if cam.loop_break():
+        steer_signal("stop")
         ser.close()
         break
     if cam.capture(frame0):
@@ -154,3 +152,47 @@ while True:
 data = connectionSock.recv(1024)
 print(data.decode("utf-8"))
 print("Complete sending message")
+
+# OBSTACLE
+while True:
+    if comm.readable():  # 시리얼 읽기
+        if comm.readline().decode('utf-8').rstrip() == 'of':
+            print("Finished obstacle")
+            break
+
+# MAIN LOOP : LANE AGAIN
+while True:
+    ar_count += 1
+    # CAMERA ON
+    _, frame0, _, frame1 = cam.camera_read(ch0, ch1)
+    cam.image_show(frame0, frame1)
+
+    # GET LANE INFO USING frame0
+    # _, hough = LD.hough_lane(frame0)
+    # cv2.imshow('hough image', hough)
+    steer, lane_image = LD.side_lane(frame0)
+    cv2.imshow('lane image', lane_image)
+
+    if new_sig_count == 0:
+        # print('0')
+        if steer_hist[-1] != steer:
+            new_sig_count = 1
+    elif new_sig_count == 1 or new_sig_count == 2:
+        # print('1')
+        if steer_hist[-1] == steer:
+            new_sig_count += 1
+        else:
+            new_sig_count = 0
+    elif new_sig_count >= 3:
+        # print('2')
+        steer_signal(steer)
+        new_sig_count = 0
+    #print(steer)
+    steer_hist.append(steer)
+
+    if cam.loop_break():
+        steer_signal("stop")
+        ser.close()
+        break
+    if cam.capture(frame0):
+        continue

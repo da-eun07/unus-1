@@ -5,7 +5,8 @@ import Vision.traffic_light_detection as tf_util
 import cv2
 from datetime import datetime
 
-# MISSION_2 : TRAFFIC LIGHT
+# MISSION_2 : TRAFFIC
+RED = 0
 
 #################### Check before Test ####################
 # ARDUINO CONNECTION
@@ -22,8 +23,8 @@ LD = lane_util.libLANE()
 TF = tf_util.libTRAFFIC()
 # VARIABLES
 global ar_count
-ar_count = 0
-steer_hist = ['forward']
+ar_count = 1
+steer_hist = ['right']
 new_sig_count = 1
 
 def send_command(command, speed):
@@ -36,17 +37,28 @@ def send_command(command, speed):
         ar_count = 0
 def steer_signal(steer):
     if steer == 'forward':
-        send_command("3", speed=1)
-    elif steer == 'leftleft':
-        send_command("1", speed=1)
-    elif steer == 'left':
-        send_command("2", speed=1)
-    elif steer == 'right':
         send_command("4", speed=1)
-    elif steer == 'rightright':
+    elif steer == 'leftleftleft':
+        send_command("1", speed=1)
+    elif steer == 'leftleft':
+        send_command("2", speed=1)
+    elif steer == 'left':
+        send_command("3", speed=1)
+    elif steer == 'right':
         send_command("5", speed=1)
-    else:  # stop
+    elif steer == 'rightright':
+        send_command("6", speed=1)
+    elif steer == 'rightrightright':
+        send_command("7", speed=1)
+    elif steer == 'obstacle':
+        send_command("8", speed=1)
+    elif steer == 'stop':  # stop
         send_command("9", speed=1)
+    else: # traffic
+        send_command("R", speed=1)
+
+input("Enter to start")
+steer_signal('forward')
 
 # MAIN LOOP
 while True:
@@ -60,6 +72,7 @@ while True:
     # cv2.imshow('hough image', hough)
     steer, lane_image = LD.side_lane(frame0)
     cv2.imshow('lane image', lane_image)
+    # color = TF.traffic_detection(frame1, sample=16, print_enable=True)
 
     if new_sig_count == 0:
         # print('0')
@@ -78,21 +91,9 @@ while True:
     #print(steer)
     steer_hist.append(steer)
 
-    # GET TRAFFIC LIGHT INFO USING frame1
-    TRAFFIC_COUNT += 1
-
-    if TRAFFIC_COUNT > 100: ### FIX ME
-        TRAFFIC = TF.traffic_detection(frame1, sample=16, print_enable=True)
-    else:
-        TRAFFIC = 'NOT_YET'
-
-    if TRAFFIC == 'GREEN' or TRAFFIC == 'NOT_YET': ### FIX ME : HOW FAR?
-        send_command("0", speed=15) # Go
-    elif TRAFFIC == 'RED' or TRAFFIC == 'YELLOW':  # stop
-        send_command("10", speed=15) # Stop
-
     if cam.loop_break():
+        steer_signal("stop")
         ser.close()
         break
-    if cam.capture(frame1):
+    if cam.capture(frame0):
         continue

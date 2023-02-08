@@ -46,10 +46,14 @@ def steer_signal(steer):
         send_command("6", speed=1)
     elif steer == 'rightrightright':
         send_command("7", speed=1)
-    else:  # stop
+    elif steer == 'obstacle':
+        send_command("8", speed=1)
+    elif steer == 'stop':  # stop
         send_command("9", speed=1)
+    else: # traffic
+        send_command("R", speed=1)
 
-input("Enter")
+input("Enter to start")
 steer_signal('forward')
 
 # MAIN LOOP
