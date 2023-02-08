@@ -303,10 +303,14 @@ class libLANE(object):
     # PLAN B : USING SIDE CAM
     def steering_poly(self, poly, param):
         hfs = poly(self.width/2)
-        if hfs < self.height * (4/15):
+        if hfs < self.height * (1/10):
             steer = 'rightright'
-        elif hfs > self.height * (11/15):
+        elif hfs > self.height * (9/10):
             steer = 'leftleft'
+        elif hfs < self.height * (3/10):
+            steer = 'right'
+        elif hfs > self.height * (7/10):
+            steer = 'left'
         else:
             if param[1] > 0.105:
                 steer = 'right'
