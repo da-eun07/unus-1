@@ -141,89 +141,81 @@ void setup() {
 //  rotate_counterclockwise(150);
 }
 void loop(){
-  long distanceRb = ultrasonic_distance(trig2, echo2);
-  long distanceRf = ultrasonic_distance(trig1, echo1);
-  // Move car forward
-  motor_forward(motor_left1, motor_left2, 60);  
-  motor_forward(motor_right1, motor_right2, 60); 
-  delay(10);
-//
-  Serial.print("Distance: ");
-  Serial.println(distanceRf);
-//  Serial.println(distanceRb);
-//return;
-  // Reverse parking algorithm
-   if (distanceRf < maxDistance) {
-    sigCnt += 1;
-   }
-//   if (sigCnt > 0 && (distanceRb > maxDistance && distanceRf > maxDistance)) {
-//    sigCnt += 1;
-//   }
-   if (sigCnt >= 20){
-    Serial.println("Spot Detected");   
-    
-    motor_forward(motor_left1, motor_left2, 60); //Forward one more
+    delay(10);
+  if (Serial.available() > 0) {
+    int command = Serial.read();
+    if (command == 'g') {
+    long distanceRb = ultrasonic_distance(trig2, echo2);
+    long distanceRf = ultrasonic_distance(trig1, echo1);
+    // Move car forward
+    motor_forward(motor_left1, motor_left2, 60);  
     motor_forward(motor_right1, motor_right2, 60); 
-    delay_toward_forward(4300);//pretty accurate 
-    
-    Serial.println("little bit more front");
-    
-    motor_hold(motor_left1, motor_left2);
-    motor_hold(motor_right1, motor_right2);
-    delay_toward_forward(1000);
-    
-    rotate_counterclockwise(150);
-   
-    motor_backward(motor_left1, motor_left2, 80);
-    motor_backward(motor_right1, motor_right2, 80);
-
-    int elapsedTime = 0;
-//    while(ultrasonic_distance(trig1, echo1) > maxDistance || ultrasonic_distance(trig2, echo2) > maxDistance){
-    while(ultrasonic_distance(trig1, echo1) > maxDistance){ // we can just check the forward us sensor only.
-      elapsedTime += 100;
-      delay_toward_forward(100);
-    }
-
-    elapsedTime += 2000;
-    delay_toward_forward(2000); // little bit more back
-    
-    Serial.print("Parking Complete");
+    delay(10);
+  //
+    Serial.print("Distance: ");
+    Serial.println(distanceRf);
+  //  Serial.println(distanceRb);
+  //return;
+    // Reverse parking algorithm
+     if (distanceRf < maxDistance) {
+      sigCnt += 1;
+     }
+  //   if (sigCnt > 0 && (distanceRb > maxDistance && distanceRf > maxDistance)) {
+  //    sigCnt += 1;
+  //   }
+     if (sigCnt >= 20){
+      Serial.println("Spot Detected");   
+      
+      motor_forward(motor_left1, motor_left2, 60); //Forward one more
+      motor_forward(motor_right1, motor_right2, 60); 
+      delay_toward_forward(4300);//pretty accurate 
+      
+      Serial.println("little bit more front");
+      
+      motor_hold(motor_left1, motor_left2);
+      motor_hold(motor_right1, motor_right2);
+      delay_toward_forward(1000);
+      
+      rotate_counterclockwise(150);
+     
+      motor_backward(motor_left1, motor_left2, 80);
+      motor_backward(motor_right1, motor_right2, 80);
   
-    motor_hold(motor_left1, motor_left2);
-    motor_hold(motor_right1, motor_right2);
-    delay_toward_forward(3500);
-
-    motor_forward(motor_left1, motor_left2, 80); 
-    motor_forward(motor_right1, motor_right2, 80); 
-    delay_toward_forward(elapsedTime + 2000); //fix me
-
-    motor_hold(motor_left1, motor_left2);
-    motor_hold(motor_right1, motor_right2);
-    delay_toward_forward(1000);
-
-//왼쪽으로 조향
-    rotate_clockwise(150);
+      int elapsedTime = 0;
+      while(ultrasonic_distance(trig1, echo1) > maxDistance){ // we can just check the forward us sensor only.
+        elapsedTime += 100;
+        delay_toward_forward(100);
+      }
+  
+      elapsedTime += 2000;
+      delay_toward_forward(2000); // little bit more back
+      
+      Serial.print("Parking Complete");
     
-//    motor_forward(motor_left2, motor_left1, 240); 
-//    motor_backward(motor_right2, motor_right1, 240);
-//    delay_toward_forward(2000); //fix me 
-//    motor_hold(motor_left1, motor_left2);
-//    motor_hold(motor_right1, motor_right2);
-//    delay_toward_forward(1000);
-//    motor_forward(motor_left2, motor_left1, 240); 
-//    motor_forward(motor_right1, motor_right2, 240); 
-//    delay_toward_forward(2300); //fixed
-//    motor_hold(motor_left1, motor_left2);
-//    motor_hold(motor_right1, motor_right2);
-//    delay_toward_forward(1500);
+      motor_hold(motor_left1, motor_left2);
+      motor_hold(motor_right1, motor_right2);
+      delay_toward_forward(3500);
+  
+      motor_forward(motor_left1, motor_left2, 80); 
+      motor_forward(motor_right1, motor_right2, 80); 
+      delay_toward_forward(elapsedTime + 2000); //fix me
+  
+      motor_hold(motor_left1, motor_left2);
+      motor_hold(motor_right1, motor_right2);
+      delay_toward_forward(1000);
+  
+  //왼쪽으로 조향
+      rotate_clockwise(150);
 
-//Towards the 'Out' line
-    motor_forward(motor_left1, motor_left2, 110); 
-    motor_forward(motor_right1, motor_right2, 110); 
-    delay_toward_forward(15000);
-
-    motor_hold(motor_left1, motor_left2);
-    motor_hold(motor_right1, motor_right2);
-    delay_toward_forward(15000);
+  //Towards the 'Out' line
+      motor_forward(motor_left1, motor_left2, 110); 
+      motor_forward(motor_right1, motor_right2, 110); 
+      delay_toward_forward(15000);
+  
+      motor_hold(motor_left1, motor_left2);
+      motor_hold(motor_right1, motor_right2);
+      delay_toward_forward(15000);
+     }
+    }
    }
-}
+  }

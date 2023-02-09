@@ -185,6 +185,7 @@ while True:
     if traffic == 'stop':
         new_tf_sig_count += 1
     if new_tf_sig_count == 5:
+        steer_signal('forward')
         steer_signal('red_stop')
         break
 
@@ -209,7 +210,7 @@ while True:
         steer_signal("stop")
         ser.close()
         break
-    if cam.capture(frame0):
+    if cam.capture(frame1):
         continue
 
 ar_count = 1

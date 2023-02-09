@@ -63,8 +63,8 @@ class libLANE(object):
         return cropped_image
     def preprocess2(self, image, roi='a'):
         a_roi = np.array(
-            [[(0, self.height-20), (0, 70),
-              (self.width, 70), (self.width, self.height-20)]],
+            [[(0, self.height-30), (0, 70),
+              (self.width, 70), (self.width, self.height-30)]],
             dtype=np.int32)
         r_roi = np.array(
             [[(self.width/2, self.height), (self.width/2, 0),
