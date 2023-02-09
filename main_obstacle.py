@@ -1,13 +1,14 @@
 import Arduino.ar_util_func as ar_util
 import Vision.cam_util_func as cam_util
 import Vision.lane_detection as lane_util
+import Vision.traffic_light_detection as tf_util
 import cv2
 from socket import *
 from struct import iter_unpack
 import numpy as np
 from datetime import datetime
 
-# MISSION_1 : AVOID OBSTACLE
+# MISSION : OBSTACLE
 
 #################### Check before Test ####################
 # ARDUINO CONNECTION
@@ -37,6 +38,8 @@ li_count = 0
 
 # LANE DETECTION
 LD = lane_util.libLANE()
+# TRAFFIC LIGHT DETECTION
+TF = tf_util.libTRAFFIC()
 # VARIABLES
 global ar_count
 ar_count = 1
@@ -72,7 +75,7 @@ def steer_signal(steer):
     elif steer == 'stop':  # stop
         send_command("9", speed=1)
     else: # traffic
-        send_command("R", speed=1)
+        send_command("r", speed=1)
 
 input("Enter to start")
 steer_signal('forward')
@@ -87,7 +90,7 @@ while True:
     # GET LANE INFO USING frame0
     # _, hough = LD.hough_lane(frame0)
     # cv2.imshow('hough image', hough)
-    steer, lane_image = LD.side_lane(frame0)
+    steer, lane_image = LD.side_lane(frame0, 'slow')
     cv2.imshow('lane image', lane_image)
 
     if new_sig_count == 0:
@@ -121,7 +124,7 @@ while True:
             dis_detected = round(y[2] * 0.4)
             new_obs_sig_count += 1
         elif y[0] == 65533:  # 3-2) criteria - none
-            print("{}th Criteria : Nothing".format(li_count))
+            # print("{}th Criteria : Nothing".format(li_count))
             dis_detected = 0
             new_obs_sig_count = 0
         elif y[0] == 65534:  # 4) finish
@@ -137,7 +140,7 @@ while True:
             R_converted = round(y[2] * 0.4)
             buffer = np.append(buffer, np.array([u_converted, v_converted, R_converted]))
 
-    if new_obs_sig_count == 10:  ### FIX ME
+    if new_obs_sig_count == 3:  ### FIX ME
         steer_signal("obstacle")
         break
 
@@ -150,17 +153,22 @@ while True:
 
 ### 본 통신 끝 ####
 data = connectionSock.recv(1024)
-print(data.decode("utf-8"))
-print("Complete sending message")
+# print(data.decode("utf-8"))
+print("Lidar communication finished")
 
 # OBSTACLE
 while True:
     if comm.readable():  # 시리얼 읽기
-        if comm.readline().decode('utf-8').rstrip() == 'of':
+        if comm.readline().decode("utf-8").rstrip() == 'of':
             print("Finished obstacle")
             break
 
-# MAIN LOOP : LANE AGAIN
+ar_count = 1
+steer_hist = ['right']
+new_sig_count = 1
+new_tf_sig_count = 0
+
+# MAIN LOOP : LANE AGAIN + TRAFFIC LIGHT RED
 while True:
     ar_count += 1
     # CAMERA ON
@@ -172,6 +180,14 @@ while True:
     # cv2.imshow('hough image', hough)
     steer, lane_image = LD.side_lane(frame0)
     cv2.imshow('lane image', lane_image)
+
+    traffic = TF.color_detection(frame1)
+    if traffic == 'stop':
+        new_tf_sig_count += 1
+    if new_tf_sig_count == 5:
+        steer_signal('forward')
+        steer_signal('red_stop')
+        break
 
     if new_sig_count == 0:
         # print('0')
@@ -194,5 +210,5 @@ while True:
         steer_signal("stop")
         ser.close()
         break
-    if cam.capture(frame0):
+    if cam.capture(frame1):
         continue

@@ -8,7 +8,7 @@ from struct import iter_unpack
 import numpy as np
 from datetime import datetime
 
-# MISSION_1 : AVOID OBSTACLE
+# MISSION : OBSTACLE + TRAFFIC LIGHT
 
 #################### Check before Test ####################
 # ARDUINO CONNECTION
@@ -168,7 +168,7 @@ steer_hist = ['right']
 new_sig_count = 1
 new_tf_sig_count = 0
 
-# MAIN LOOP : LANE AGAIN
+# MAIN LOOP : LANE AGAIN + TRAFFIC LIGHT RED
 while True:
     ar_count += 1
     # CAMERA ON
@@ -218,7 +218,7 @@ steer_hist = ['right']
 new_sig_count = 1
 new_tf_sig_count = 0
 
-# MAIN LOOP : LANE AGAIN
+# MAIN LOOP : LANE AGAIN + TRAFFIC LIGHT GREEN
 while True:
     ar_count += 1
     # CAMERA ON

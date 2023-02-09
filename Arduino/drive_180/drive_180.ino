@@ -18,7 +18,7 @@ int motor_right2 = 7;
 #define ANGLE7 62
 #define ANGLE1 59
 #define ANGLE35 18
-#define MOTOR_SPEED 180  //80 //170 
+#define MOTOR_SPEED 165  //180
 
 void motor_left(int motorSpeed){
   motor_backward(motor_dir_con1, motor_dir_con2, motorSpeed);

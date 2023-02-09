@@ -5,8 +5,7 @@ import Vision.traffic_light_detection as tf_util
 import cv2
 from datetime import datetime
 
-# MISSION_2 : TRAFFIC
-RED = 0
+# MISSION : TRAFFIC LIGHT
 
 #################### Check before Test ####################
 # ARDUINO CONNECTION
@@ -26,6 +25,7 @@ global ar_count
 ar_count = 1
 steer_hist = ['right']
 new_sig_count = 1
+new_tf_sig_count = 0
 
 def send_command(command, speed):
     # speed min: 15
@@ -55,12 +55,12 @@ def steer_signal(steer):
     elif steer == 'stop':  # stop
         send_command("9", speed=1)
     else: # traffic
-        send_command("R", speed=1)
+        send_command("r", speed=1)
 
 input("Enter to start")
 steer_signal('forward')
 
-# MAIN LOOP
+# MAIN LOOP : LANE AGAIN + TRAFFIC LIGHT RED
 while True:
     ar_count += 1
     # CAMERA ON
@@ -72,7 +72,14 @@ while True:
     # cv2.imshow('hough image', hough)
     steer, lane_image = LD.side_lane(frame0)
     cv2.imshow('lane image', lane_image)
-    # color = TF.traffic_detection(frame1, sample=16, print_enable=True)
+
+    traffic = TF.color_detection(frame1)
+    if traffic == 'stop':
+        new_tf_sig_count += 1
+    if new_tf_sig_count == 5:
+        steer_signal('forward')
+        steer_signal('red_stop')
+        break
 
     if new_sig_count == 0:
         # print('0')
@@ -90,6 +97,52 @@ while True:
         new_sig_count = 0
     #print(steer)
     steer_hist.append(steer)
+
+    if cam.loop_break():
+        steer_signal("stop")
+        ser.close()
+        break
+    if cam.capture(frame1):
+        continue
+
+ar_count = 1
+steer_hist = ['right']
+new_sig_count = 1
+new_tf_sig_count = 0
+
+# MAIN LOOP : LANE AGAIN + TRAFFIC LIGHT GREEN
+while True:
+    ar_count += 1
+    # CAMERA ON
+    _, frame0, _, frame1 = cam.camera_read(ch0, ch1)
+    cam.image_show(frame0, frame1)
+
+    # GET LANE INFO USING frame0
+    # _, hough = LD.hough_lane(frame0)
+    # cv2.imshow('hough image', hough)
+    steer, lane_image = LD.side_lane(frame0)
+    cv2.imshow('lane image', lane_image)
+
+    traffic = TF.color_detection(frame1)
+    if traffic == 'go':
+        new_tf_sig_count += 1
+    if new_tf_sig_count >= 5:
+        if new_sig_count == 0:
+            # print('0')
+            if steer_hist[-1] != steer:
+                new_sig_count = 1
+        elif new_sig_count == 1 or new_sig_count == 2:
+            # print('1')
+            if steer_hist[-1] == steer:
+                new_sig_count += 1
+            else:
+                new_sig_count = 0
+        elif new_sig_count >= 3:
+            # print('2')
+            steer_signal(steer)
+            new_sig_count = 0
+        # print(steer)
+        steer_hist.append(steer)
 
     if cam.loop_break():
         steer_signal("stop")
