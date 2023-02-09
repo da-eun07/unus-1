@@ -18,7 +18,7 @@ int motor_right2 = 7;
 #define ANGLE7 62
 #define ANGLE1 59
 #define ANGLE35 18
-#define MOTOR_SPEED 165  //180
+#define MOTOR_SPEED 180  //180
 
 void motor_left(int motorSpeed){
   motor_backward(motor_dir_con1, motor_dir_con2, motorSpeed);
@@ -97,13 +97,13 @@ void loop() {
     int desiredValue = 0;
     if (command == '1') {
       desiredValue = FORWARD_ANGLE  + ANGLE1 + 2;
-      motor_forward(motor_left1, motor_left2, MOTOR_SPEED - 30); 
-      motor_forward(motor_right1, motor_right2, MOTOR_SPEED - 30);     //-10 
+      motor_forward(motor_left1, motor_left2, MOTOR_SPEED - 31); 
+      motor_forward(motor_right1, motor_right2, MOTOR_SPEED - 31);     //-10 
     }
     else if (command == '2') {
       desiredValue = FORWARD_ANGLE + ANGLE2 + 2;
-      motor_forward(motor_left1, motor_left2, MOTOR_SPEED -15); 
-      motor_forward(motor_right1, motor_right2, MOTOR_SPEED-15);          //0
+      motor_forward(motor_left1, motor_left2, MOTOR_SPEED -17); 
+      motor_forward(motor_right1, motor_right2, MOTOR_SPEED-17);          //0
     }
     else if (command == '3') {
       desiredValue = FORWARD_ANGLE + ANGLE35 + 2;
@@ -122,13 +122,13 @@ void loop() {
     }  
     else if (command == '6') {
       desiredValue = FORWARD_ANGLE - ANGLE6;
-      motor_forward(motor_left1, motor_left2, MOTOR_SPEED -15);           //0
-      motor_forward(motor_right1, motor_right2, MOTOR_SPEED -15);  
+      motor_forward(motor_left1, motor_left2, MOTOR_SPEED -17);           //0
+      motor_forward(motor_right1, motor_right2, MOTOR_SPEED -17);  
     }
     else if (command == '7') {
       desiredValue = FORWARD_ANGLE - ANGLE7 + 1;
-      motor_forward(motor_left1, motor_left2, MOTOR_SPEED - 30);      //-10
-      motor_forward(motor_right1, motor_right2, MOTOR_SPEED - 30);  
+      motor_forward(motor_left1, motor_left2, MOTOR_SPEED - 31);      //-10
+      motor_forward(motor_right1, motor_right2, MOTOR_SPEED - 31);  
     }
     
     desiredValue = min(max(desiredValue, 447), 600);

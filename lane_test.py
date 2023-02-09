@@ -3,6 +3,7 @@ import cv2
 import Vision.lane_detection as lane_util
 import Vision.cam_util_func as cam_util
 from datetime import datetime
+import Vision.auto_cc as auto
 
 '''
 # 1
@@ -58,13 +59,14 @@ LD = lane_util.libLANE()
 
 while True:
     _, frame0= cam.camera_read(ch0)
-    #_, gre, gra = LD.steering_notp(frame0)
-    #cv2.imshow('green', gre)
-    #cv2.imshow('gra',gra)
-    _, hough = LD.hough_lane(frame0)
-    cv2.imshow('hough image', hough)
+    # _, hough = LD.hough_lane(frame0)
+    # cv2.imshow('hough image', hough)
     steer, lane_image = LD.side_lane(frame0)
     cv2.imshow('lane image', lane_image)
+    # steer, green, gray = LD.steering_notp(frame0)
+    # cv2.imshow('gre',green)
+    # cv2.imshow('gra', gray)
+    print(steer)
     if cam.loop_break():
         break
     if cam.capture(frame0):

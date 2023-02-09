@@ -10,8 +10,7 @@ int motor_dir_con2 = 3;
 int potPin = A0;      // Pin for the potentiometer
 int trig1 = 10; //Rf
 int echo1 = 11;
-int trig2 = 8; //Rb
-int echo2 = 9;
+
 
 int maxDistance = 900; //mm
 int sigCnt = 0;
@@ -96,7 +95,7 @@ void rotate_clockwise(int motorSpeed){
 
     motor_forward(motor_left2, motor_left1, motorSpeed); 
     motor_forward(motor_right1, motor_right2, motorSpeed); 
-    delay_toward_forward(1450); //final twist!!
+    delay_toward_forward(1750); //final twist!!
     motor_hold(motor_left1, motor_left2);
     motor_hold(motor_right1, motor_right2);
     delay_toward_forward(1500);
@@ -133,8 +132,6 @@ void setup() {
   pinMode(A0, INPUT);  
   pinMode(trig1, OUTPUT); // Sets the trigPin as an Output
   pinMode(echo1, INPUT);
-  pinMode(trig2, OUTPUT); // Sets the trigPin as an Output
-  pinMode(echo2, INPUT);
 
   delay_toward_forward(5000);
   
@@ -142,21 +139,15 @@ void setup() {
 }
 void loop(){
     delay(10);
-  if (Serial.available() > 0) {
-    int command = Serial.read();
-    if (command == 'g') {
-    long distanceRb = ultrasonic_distance(trig2, echo2);
     long distanceRf = ultrasonic_distance(trig1, echo1);
     // Move car forward
     motor_forward(motor_left1, motor_left2, 60);  
     motor_forward(motor_right1, motor_right2, 60); 
     delay(10);
-  //
+
     Serial.print("Distance: ");
     Serial.println(distanceRf);
-  //  Serial.println(distanceRb);
-  //return;
-    // Reverse parking algorithm
+
      if (distanceRf < maxDistance) {
       sigCnt += 1;
      }
@@ -168,7 +159,7 @@ void loop(){
       
       motor_forward(motor_left1, motor_left2, 60); //Forward one more
       motor_forward(motor_right1, motor_right2, 60); 
-      delay_toward_forward(4300);//pretty accurate 
+      delay_toward_forward(6000);//pretty accurate 
       
       Serial.println("little bit more front");
       
@@ -182,13 +173,19 @@ void loop(){
       motor_backward(motor_right1, motor_right2, 80);
   
       int elapsedTime = 0;
-      while(ultrasonic_distance(trig1, echo1) > maxDistance){ // we can just check the forward us sensor only.
+      sigCnt = 0;
+      while(sigCnt <= 10) {
+        if (ultrasonic_distance(trig1, echo1) <= 1000){
+          sigCnt+=1;
+    Serial.print("Distance: ");
+    Serial.println(distanceRf);
+        }
         elapsedTime += 100;
         delay_toward_forward(100);
       }
   
       elapsedTime += 2000;
-      delay_toward_forward(2000); // little bit more back
+      delay_toward_forward(1500); // little bit more back
       
       Serial.print("Parking Complete");
     
@@ -198,7 +195,7 @@ void loop(){
   
       motor_forward(motor_left1, motor_left2, 80); 
       motor_forward(motor_right1, motor_right2, 80); 
-      delay_toward_forward(elapsedTime + 2000); //fix me
+      delay_toward_forward(elapsedTime+2000);
   
       motor_hold(motor_left1, motor_left2);
       motor_hold(motor_right1, motor_right2);
@@ -216,6 +213,6 @@ void loop(){
       motor_hold(motor_right1, motor_right2);
       delay_toward_forward(15000);
      }
-    }
-   }
+//    }
+//   }
   }

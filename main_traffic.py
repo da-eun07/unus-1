@@ -77,8 +77,7 @@ while True:
     if traffic == 'stop':
         new_tf_sig_count += 1
     if new_tf_sig_count == 5:
-        steer_signal('forward')
-        steer_signal('red_stop')
+        steer_signal('stop')
         break
 
     if new_sig_count == 0:
@@ -124,25 +123,48 @@ while True:
     cv2.imshow('lane image', lane_image)
 
     traffic = TF.color_detection(frame1)
+    print(traffic)
     if traffic == 'go':
         new_tf_sig_count += 1
+        print(new_tf_sig_count)
     if new_tf_sig_count >= 5:
-        if new_sig_count == 0:
-            # print('0')
-            if steer_hist[-1] != steer:
-                new_sig_count = 1
-        elif new_sig_count == 1 or new_sig_count == 2:
-            # print('1')
-            if steer_hist[-1] == steer:
-                new_sig_count += 1
-            else:
-                new_sig_count = 0
-        elif new_sig_count >= 3:
-            # print('2')
-            steer_signal(steer)
+        steer_signal('forward')
+        break
+
+    if cam.loop_break():
+        steer_signal("stop")
+        ser.close()
+        break
+    if cam.capture(frame0):
+        continue
+while True:
+    ar_count += 1
+    # CAMERA ON
+    _, frame0, _, frame1 = cam.camera_read(ch0, ch1)
+    cam.image_show(frame0, frame1)
+
+    # GET LANE INFO USING frame0
+    _, hough = LD.hough_lane(frame0)
+    cv2.imshow('hough image', hough)
+    steer, lane_image = LD.side_lane(frame0)
+    cv2.imshow('lane image', lane_image)
+
+    if new_sig_count == 0:
+        # print('0')
+        if steer_hist[-1] != steer:
+            new_sig_count = 1
+    elif new_sig_count == 1:
+        # print('1')
+        if steer_hist[-1] == steer:
+            new_sig_count += 1
+        else:
             new_sig_count = 0
-        # print(steer)
-        steer_hist.append(steer)
+    elif new_sig_count >= 2:
+        # print('2')
+        steer_signal(steer)
+        new_sig_count = 0
+    # print(steer)
+    steer_hist.append(steer)
 
     if cam.loop_break():
         steer_signal("stop")

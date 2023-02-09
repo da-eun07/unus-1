@@ -71,7 +71,7 @@ def steer_signal(steer):
     elif steer == 'rightrightright':
         send_command("7", speed=1)
     elif steer == 'obstacle':
-        send_command("8", speed=1)
+        send_command("f", speed=1) # c, m, f
     elif steer == 'stop':  # stop
         send_command("9", speed=1)
     else: # traffic

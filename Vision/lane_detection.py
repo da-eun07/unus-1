@@ -75,8 +75,8 @@ class libLANE(object):
               (self.width /2 - 140, self.height - 50), (self.width /2 - 140, 0)]],
             dtype=np.int32)
         slow_roi = np.array(
-            [[(0, self.height-50), (0, 100),
-              (self.width, 100), (self.width, self.height-50)]],
+            [[(0, self.height-55), (0, 100),
+              (self.width, 100), (self.width, self.height-55)]],
             dtype=np.int32)
 
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -328,7 +328,7 @@ class libLANE(object):
         return steer
     def steering_notp(self, image):
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        green_mask = cv2.inRange(hsv, (30, 20, 23), (70, 255, 255))
+        green_mask = cv2.inRange(hsv, (30, 20, 10), (80, 255, 255))
         gray_mask = cv2.inRange(hsv, (0,0,0), (180, 255, 90))
         green = np.count_nonzero(green_mask==255)
         gray = np.count_nonzero(gray_mask==255)

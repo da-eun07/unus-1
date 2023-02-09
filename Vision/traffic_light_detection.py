@@ -27,21 +27,21 @@ class libTRAFFIC(object):
                                    minLineLength=mll, maxLineGap=mlg)
         elif mode == "circle":
             return cv2.HoughCircles(image.copy(), cv2.HOUGH_GRADIENT, dp=1, minDist=100,
-                                    param1=200, param2=10, minRadius=20, maxRadius=60)
+                                    param1=200, param2=10, minRadius=33, maxRadius=38)
 
     # UNUS MADED
     def preprocess(self, image):
         region_of_interest_vertices = np.array(
-            [[(0, self.height), (0, 0),
-              (self.width, 0), (self.width, self.height)]],
+            [[(0, 100), (0, 0),
+              (self.width, 0), (self.width, 100)]],
             dtype=np.int32) ### FIX ME
         blur = self.gaussian_blurring(image, (21,21))
         cropped_image = self.region_of_interest(blur, np.array([region_of_interest_vertices], np.int32), )
 
         return cropped_image
     def color_detection(self, image):
-        #pre = self.preprocess(image)
-        pre = self.gaussian_blurring(image, (21, 21))
+        # pre = self.preprocess(image)
+        pre = self.gaussian_blurring(image, (27, 27))
         hsv = cv2.cvtColor(pre, cv2.COLOR_BGR2HSV)
         green_mask = cv2.inRange(hsv, np.array([60, 20, 50]), np.array([90, 255, 255]))
         green = cv2.bitwise_and(pre, pre, mask=green_mask)
@@ -49,21 +49,27 @@ class libTRAFFIC(object):
         red = cv2.bitwise_and(pre, pre, mask=red_mask)
 
         if np.count_nonzero(green_mask) > np.count_nonzero(red_mask):
+            return 'go'
             cv2.imshow('g', green_mask)
             green_circles = self.hough_transform(green_mask, mode='circle')
             if green_circles is not None:
+                return 'go'
                 for circle in green_circles[0]:
                     center, count = (int(circle[0]), int(circle[1])), 0
                     result = cv2.circle(image.copy(), center, int(circle[2]), (0, 0, 255), 2)
-                    cv2.imshow('r', result)
-            return 'go'
+                    # cv2.imshow('r', result)
+                    return 'go'
+            else:
+                return 'nothing'
         elif np.count_nonzero(red_mask) > np.count_nonzero(green_mask):
             cv2.imshow('r', red_mask)
             red_circles = self.hough_transform(red_mask, mode='circle')
             if red_circles is not None:
-                print('yes')
+                return 'stop'
                 for circle in red_circles[0]:
                     center, count = (int(circle[0]), int(circle[1])), 0
                     result = cv2.circle(image.copy(), center, int(circle[2]), (0, 0, 255), 2)
-                    cv2.imshow('r', result)
-            return 'stop'
+                    # cv2.imshow('r', result)
+                    return 'stop'
+            else:
+                return 'nothing'
