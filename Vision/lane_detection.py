@@ -78,7 +78,8 @@ class libLANE(object):
             [[(0, self.height-55), (0, 100),
               (self.width, 100), (self.width, self.height-55)]],
             dtype=np.int32)
-
+        image = image - 50
+        image = np.clip(image, 0, 255)
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         white = cv2.inRange(hsv, (0, 0, 160), (180, 255, 255))  ### FIX ME
         black_mask = cv2.inRange(hsv, (0,0,0), (180, 255,90))

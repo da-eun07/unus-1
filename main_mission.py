@@ -46,6 +46,7 @@ ar_count = 1
 steer_hist = ['right']
 new_sig_count = 1
 new_obs_sig_count = 0
+obs = 'f'
 
 def send_command(command, speed):
     # speed min: 15
@@ -71,14 +72,19 @@ def steer_signal(steer):
     elif steer == 'rightrightright':
         send_command("7", speed=1)
     elif steer == 'obstacle':
-        send_command("m", speed=1)  # c, m, f
+        send_command(obs, speed=1)  # c, m, f
     elif steer == 'stop':  # stop
         send_command("9", speed=1)
     else: # traffic
         send_command("r", speed=1)
 
-input("Enter to start")
-steer_signal('forward')
+obs = input("Enter to start")
+
+if obs == 'c' or obs == 'm' or obs == 'f':
+    steer_signal('forward')
+else:
+    obs = 'f'
+    steer_signal('forward')
 
 # MAIN LOOP : LANE + OBSTACLE
 while True:

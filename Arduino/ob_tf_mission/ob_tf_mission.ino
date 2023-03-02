@@ -125,10 +125,10 @@ void loop() {
     if (command == 'f') { //장애물 피하기 Rule based 진행
       motor_forward(motor_left1, motor_left2, 80); 
       motor_forward(motor_right1, motor_right2, 80); 
-      delay_toward('1', 4400); // m:5700 f:5200
+      delay_toward('1', 4550); // m:5700 f:5200
       delay_toward('7', 4600); // m:4600 f:4600
       delay_toward('4', 2000); // m:2000 f:2000
-      delay_toward('7', 5000); // m:5600 f:4900
+      delay_toward('7', 4900); // m:5600 f:4900
       delay_toward('1', 4600); // m:4600 f:4600
       delay_toward('4', 500);  // m:500  f:500
       Serial.println("of");
