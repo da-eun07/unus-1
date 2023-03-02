@@ -6,6 +6,8 @@ import cv2
 from datetime import datetime
 
 # MISSION : TRAFFIC LIGHT
+#### this code is the partion of the 'main_mission.py'
+#### for the detail explanation, go to 'main_mission.py'
 
 #################### Check before Test ####################
 # ARDUINO CONNECTION

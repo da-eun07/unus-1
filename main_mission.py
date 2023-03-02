@@ -43,19 +43,24 @@ TF = tf_util.libTRAFFIC()
 # VARIABLES
 global ar_count
 ar_count = 1
-steer_hist = ['right']
+steer_hist = ['right'] # history list of lane result
 new_sig_count = 1
 new_obs_sig_count = 0
-obs = 'f'
+obs = 'f' # the place of the obstacle
 
+# send command to the arduino with speed ~ means delay in this function
 def send_command(command, speed):
     # speed min: 15
-    global ar_count
+    global ar_count # use the global variable counting while reading the camera
     if ar_count >= speed:  ### FIX ME
         print('To Arduino: ' + command)
         comm.write(command.encode())
+        # print the timestamp
         print(datetime.now().timestamp())
+        # reset the counting
         ar_count = 0
+# mapping steering result and the command required in arduino code (check package Arduino)
+# and send them to arduino
 def steer_signal(steer):
     if steer == 'forward':
         send_command("4", speed=1)
@@ -72,12 +77,13 @@ def steer_signal(steer):
     elif steer == 'rightrightright':
         send_command("7", speed=1)
     elif steer == 'obstacle':
-        send_command(obs, speed=1)  # c, m, f
+        send_command(obs, speed=1)  # obs is one of 'c', 'm', 'f'
     elif steer == 'stop':  # stop
         send_command("9", speed=1)
-    else: # traffic
+    else: # traffic - not used
         send_command("r", speed=1)
 
+# just enter or insert 'c', 'm', 'f'
 obs = input("Enter to start")
 
 if obs == 'c' or obs == 'm' or obs == 'f':
@@ -88,32 +94,40 @@ else:
 
 # MAIN LOOP : LANE + OBSTACLE
 while True:
+    # counting by every frame
     ar_count += 1
-    # CAMERA ON
+    # camera on
     _, frame0, _, frame1 = cam.camera_read(ch0, ch1)
+    # show the camera images
     cam.image_show(frame0, frame1)
 
-    # GET LANE INFO USING frame0
+    # get lane info from frame0
     # _, hough = LD.hough_lane(frame0)
     # cv2.imshow('hough image', hough)
+    # get the steering
     steer, lane_image = LD.side_lane(frame0, 'slow')
     cv2.imshow('lane image', lane_image)
 
     if new_sig_count == 0:
         # print('0')
+        # compare with the history list and if it is different with the last one, make new_sig_count to 1
         if steer_hist[-1] != steer:
             new_sig_count = 1
     elif new_sig_count == 1 or new_sig_count == 2:
         # print('1')
+        # if the new signal came after then count up the new_sig_count
         if steer_hist[-1] == steer:
             new_sig_count += 1
+        # if not reset it
         else:
             new_sig_count = 0
-    elif new_sig_count >= 3: ## m, f: 3
+    elif new_sig_count >= 3: # '3' is a kind of buffer
         # print('2')
+        # send the steer signal
         steer_signal(steer)
+        # reset the new_sig_count
         new_sig_count = 0
-    # print(steer)
+    # append new steering info to the history list
     steer_hist.append(steer)
 
     # LIDAR COMMUNICATION
@@ -146,7 +160,9 @@ while True:
             R_converted = round(y[2] * 0.4)
             buffer = np.append(buffer, np.array([u_converted, v_converted, R_converted]))
 
+    # if more than 3 signals in the range of obstacle
     if new_obs_sig_count == 3:  ### FIX ME
+        # send the signal to avoid the obstacle and break
         steer_signal("obstacle")
         break
 
@@ -162,32 +178,35 @@ data = connectionSock.recv(1024)
 # print(data.decode("utf-8"))
 print("Lidar communication finished")
 
-# OBSTACLE
+# OBSTACLE AVOIDING
 while True:
-    if comm.readable():  # 시리얼 읽기
-        if comm.readline().decode("utf-8").rstrip() == 'of':
+    if comm.readable():  # read the serial
+        if comm.readline().decode("utf-8").rstrip() == 'of': # if the avoiding finished
+            # print and break
             print("Finished obstacle")
             break
 
+# reset the variables for driving
 ar_count = 1
 steer_hist = ['right']
 new_sig_count = 1
 new_tf_sig_count = 0
 
 # MAIN LOOP : LANE AGAIN + TRAFFIC LIGHT RED
+# there's no explanation of repeated part
 while True:
     ar_count += 1
-    # CAMERA ON
     _, frame0, _, frame1 = cam.camera_read(ch0, ch1)
     cam.image_show(frame0, frame1)
 
-    # GET LANE INFO USING frame0
     # _, hough = LD.hough_lane(frame0)
     # cv2.imshow('hough image', hough)
     steer, lane_image = LD.side_lane(frame0)
     cv2.imshow('lane image', lane_image)
 
+    # get the traffic light info from frame1
     traffic = TF.color_detection(frame1)
+    # if the 'stop' signal came after 5 times send signal to the arduino
     if traffic == 'stop':
         new_tf_sig_count += 1
     if new_tf_sig_count == 5:
@@ -226,18 +245,18 @@ new_tf_sig_count = 0
 # MAIN LOOP : LANE AGAIN + TRAFFIC LIGHT GREEN
 while True:
     ar_count += 1
-    # CAMERA ON
     _, frame0, _, frame1 = cam.camera_read(ch0, ch1)
     cam.image_show(frame0, frame1)
 
-    # GET LANE INFO USING frame0
     # _, hough = LD.hough_lane(frame0)
     # cv2.imshow('hough image', hough)
     steer, lane_image = LD.side_lane(frame0)
     cv2.imshow('lane image', lane_image)
 
+    # get the traffic light info from frame1
     traffic = TF.color_detection(frame1)
-    print(traffic)
+    # print(traffic)
+    # if the 'go' signal came after more than 5 times send 'forward' signal to the arduino and break
     if traffic == 'go':
         new_tf_sig_count += 1
         print(new_tf_sig_count)
@@ -251,13 +270,13 @@ while True:
         break
     if cam.capture(frame0):
         continue
+
+# LOOP FOR DRIVING
 while True:
     ar_count += 1
-    # CAMERA ON
     _, frame0, _, frame1 = cam.camera_read(ch0, ch1)
     cam.image_show(frame0, frame1)
 
-    # GET LANE INFO USING frame0
     _, hough = LD.hough_lane(frame0)
     cv2.imshow('hough image', hough)
     steer, lane_image = LD.side_lane(frame0)

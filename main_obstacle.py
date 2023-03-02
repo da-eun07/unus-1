@@ -9,6 +9,8 @@ import numpy as np
 from datetime import datetime
 
 # MISSION : OBSTACLE
+#### this code is the partion of the 'main_mission.py'
+#### for the detail explanation, go to 'main_mission.py'
 
 #################### Check before Test ####################
 # ARDUINO CONNECTION

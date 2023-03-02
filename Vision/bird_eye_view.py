@@ -1,3 +1,4 @@
+# NOT USED
 import cv2 as cv2
 import numpy as np
 
@@ -29,15 +30,18 @@ if __name__ == "__main__":
     # test image
     # image = cv2.imread('./test_images/24_19-48-02.png')
 
-    # video
+    # video capture from the camera
     ch0 = cv2.VideoCapture(0)
     ch0.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
     ch0.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
     while True:
+        # read frame
         _, frame = ch0.read()
 
+        # transform the frame into bird eye view
         transformed_frame = bev(frame)
+        # show the images
         cv2.imshow("Frame", frame)
         cv2.imshow("Transformed_frame Bird Eye View", transformed_frame)
 
